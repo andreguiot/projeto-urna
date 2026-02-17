@@ -2,57 +2,44 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Cadastro Urna</title>
-    <style>
-
-        body { 
-            font-family: sans-serif; 
-            background: #f0f2f5; 
-            padding: 20px; 
-        }
-        .card { 
-            background: white; 
-            padding: 20px; 
-            border-radius: 8px; 
-            width: 350px; 
-            margin: auto; 
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
-        }
-        .grupo { 
-            margin-bottom: 15px; 
-        }
-
-        input, select { 
-            width: 100%; 
-            padding: 8px; 
-            border: 1px solid #ddd; 
-            border-radius: 4px; 
-        }
-        
-        button { 
-            background: #0056b3; 
-            color: white; 
-            border: none; 
-            padding: 10px; 
-            width: 100%; cursor: pointer; border-radius: 4px; }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestão de Candidatos - Urna</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="card">
-        <h2>Novo Candidato</h2>
-        <form id="form">
-            <div class="grupo">
-                <label>Nome</label>
-                <input type="text" name="nome">
-            </div>
-            <div class="grupo">
-                <label>Turma</label>
-                <select name="turma">
+
+    <div class="container">
+        <h1>Painel Administrativo</h1>
+
+        <section class="card">
+            <h3>Cadastrar Novo Candidato</h3>
+            <form id="formCadastro">
+                <label>Nome:</label>
+                <input type="text" name="nome" placeholder="Nome Completo" required>
+                
+                <label>Número da Chapa:</label>
+                <input type="number" name="numero" placeholder="Ex: 10" required>
+                
+                <label>Turma:</label>
+                <select id="turma" name="turma" required onchange="carregarLista()">
+                    <option value="">Selecione a Turma...</option>
                     <option value="111">Turma 111</option>
+                    <option value="112">Turma 112</option>
+                    <option value="211">Turma 211</option>
                 </select>
+                
+                <button type="submit" style="background: #0056b3; color: white; border: none; margin-top: 10px;">Salvar Candidato</button>
+            </form>
+        </section>
+
+        <section class="card">
+            <h3>Lista de Candidatos</h3>
+            <div id="lista-candidatos">
+                <p>Selecione uma turma acima.</p>
             </div>
-            <button type="button">Cadastrar</button>
-        </form>
+        </section>
     </div>
+
+    <script src="/static/js/admin.js"></script>
 </body>
 </html>
