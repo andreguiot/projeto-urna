@@ -3,43 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestão de Candidatos - Urna</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Painel Urna - Gestão de Mídia</title>
+    <link rel="stylesheet" href="../static/css/style.css">
 </head>
 <body>
 
     <div class="container">
-        <h1>Painel Administrativo</h1>
-
+        <!-- Formulário de Cadastro -->
         <section class="card">
-            <h3>Cadastrar Novo Candidato</h3>
+            <h2>Novo Candidato</h2>
             <form id="formCadastro">
-                <label>Nome:</label>
-                <input type="text" name="nome" placeholder="Nome Completo" required>
                 
-                <label>Número da Chapa:</label>
-                <input type="number" name="numero" placeholder="Ex: 10" required>
+                <label for="nome">Nome Completo</label>
+                <input type="text" id="nome" name="nome" required>
                 
-                <label>Turma:</label>
+                <label for="numero">Número da Chapa</label>
+                <input type="number" id="numero" name="numero" required>
+                
+                <label for="turma">Turma</label>
                 <select id="turma" name="turma" required onchange="carregarLista()">
-                    <option value="">Selecione a Turma...</option>
+                    <option value="" disabled selected>Selecione...</option>
                     <option value="111">Turma 111</option>
                     <option value="112">Turma 112</option>
                     <option value="211">Turma 211</option>
                 </select>
-                
-                <button type="submit" style="background: #0056b3; color: white; border: none; margin-top: 10px;">Salvar Candidato</button>
+
+                <!-- Input de Foto -->
+                <label class="upload-label">
+                    <span>📸 Selecionar Foto do Aluno</span>
+                    <input type="file" id="foto" name="foto" accept="image/*" required style="display:none;">
+                </label>
+
+                <div id="preview-container" class="preview-area">
+                    <img id="preview-img" src="" alt="Prévia">
+                </div>
+
+                <button type="submit">Finalizar Cadastro</button>
             </form>
         </section>
 
+        <!-- Listagem de Candidatos -->
         <section class="card">
-            <h3>Lista de Candidatos</h3>
+            <h2>Candidatos da Turma</h2>
             <div id="lista-candidatos">
-                <p>Selecione uma turma acima.</p>
+                <p>Aguardando seleção de turma...</p>
             </div>
         </section>
     </div>
 
-    <script src="/static/js/admin.js"></script>
+    <script src="../static/js/admin.js"></script>
 </body>
 </html>
