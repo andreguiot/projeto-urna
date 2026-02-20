@@ -3,54 +3,71 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel Urna - Gestão de Mídia</title>
+    <title>Painel da Coordenação - Urna Eletrônica</title>
+    <link href="https://fonts.googleapis.com/css2?family=League+Spartan:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../static/css/style.css">
 </head>
 <body>
 
-    <div class="container">
-        <!-- Formulário de Cadastro -->
-        <section class="card">
+    <header class="header-topo">
+        <h1>Gestão de Candidatos</h1>
+        <p>Cadastro de Alunos</p>
+    </header>
+
+    <main class="container">
+        
+        <section class="card formulario-section">
             <h2>Novo Candidato</h2>
             <form id="formCadastro">
-                
-                <label for="nome">Nome Completo</label>
-                <input type="text" id="nome" name="nome" required>
-                
-                <label for="numero">Número da Chapa</label>
-                <input type="number" id="numero" name="numero" required>
-                
-                <label for="turma">Turma</label>
-                <select id="turma" name="turma" required onchange="carregarLista()">
-                    <option value="" disabled selected>Selecione...</option>
-                    <option value="111">Turma 111</option>
-                    <option value="112">Turma 112</option>
-                    <option value="211">Turma 211</option>
-                </select>
 
-                <!-- Input de Foto -->
-                <label class="upload-label">
-                    <span>📸 Selecionar Foto do Aluno</span>
-                    <input type="file" id="foto" name="foto" accept="image/*" required style="display:none;">
-                </label>
-
-                <div id="preview-container" class="preview-area">
-                    <img id="preview-img" src="" alt="Prévia">
+                <div class="grupo-input">
+                    <label for="turma">Turma</label>
+                    <select id="turma" name="turma" required onchange="carregarLista()">
+                        <option value="" disabled selected>Selecione...</option>
+                        <option value="01">Turma 01</option>
+                        <option value="02">Turma 02</option>
+                        <option value="03">Turma 03</option>
+                    </select>
                 </div>
 
-                <button type="submit">Finalizar Cadastro</button>
+                <div class="grupo-input">
+                    <label for="nome">Nome Completo</label>
+                    <input type="text" id="nome" name="nome" placeholder="Ex: João da Silva" required>
+                </div>
+
+                <div class="grupo-input">
+                    <label for="numero">Número da Chapa</label>
+                    <input type="number" id="numero" name="numero" placeholder="Ex: 1101" required>
+                </div>
+
+                <div class="grupo-input upload-area">
+                    <label for="foto" class="upload-label">
+                        <span>📸 Carregar Foto do Aluno</span>
+                        <input type="file" id="foto" name="foto" accept="image/*" required>
+                    </label>
+                    <div id="preview-container" class="escondido">
+                        <img id="preview-img" src="" alt="Prévia">
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-salvar">Salvar Candidato</button>
             </form>
+            <div id="feedback" class="feedback-msg"></div>
         </section>
 
-        <!-- Listagem de Candidatos -->
-        <section class="card">
-            <h2>Candidatos da Turma</h2>
-            <div id="lista-candidatos">
-                <p>Aguardando seleção de turma...</p>
+        <!-- Lista de Cadastrados -->
+        <section class="card lista-section">
+            <div class="header-lista">
+                <h2>Candidatos da Turma</h2>
+                <button onclick="carregarLista()" class="btn-refresh">Atualizar</button>
+            </div>
+            
+            <div id="lista-candidatos" class="grid-candidatos">
+                <p class="aviso-vazio">Selecione uma turma para ver os candidatos.</p>
             </div>
         </section>
-    </div>
 
+    </main>
     <script src="../static/js/admin.js"></script>
 </body>
 </html>

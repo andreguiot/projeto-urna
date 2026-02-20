@@ -1,66 +1,102 @@
-const inputFoto = document.getElementById('foto');
-const previewImg = document.getElementById('preview-img');
-const previewContainer = document.getElementById('preview-container');
+class CandidatoService {
+    async salvar(formData) {
+        const response = await fetch('/api/candidatos', {
+            method: 'POST',
+            body: formData
+        });
+        return await response.json();
+    }
 
-/**
-  Preview: Lê o arquivo do input e exibe na tela antes do envio.
- */
+    async listarPorTurma(turma) {
+        const response = await fetch(`/api/candidatos/${turma}`);
+        return await response.json();
+    }
+
+    async deletar(id) {
+        await fetch(`/api/candidatos/${id}`, { method: 'DELETE' });
+    }
+}
+
+const service = new CandidatoService();
+const form = document.getElementById('formCadastro');
+const inputFoto = document.getElementById('foto');
+const previewContainer = document.getElementById('preview-container');
+const previewImg = document.getElementById('preview-img');
+const selectTurma = document.getElementById('turma');
+const listaContainer = document.getElementById('lista-candidatos');
+const feedback = document.getElementById('feedback');
+
 inputFoto.addEventListener('change', function(e) {
     const arquivo = e.target.files[0];
     if (arquivo) {
         const reader = new FileReader();
-        reader.onload = function(event) {
-            previewImg.src = event.target.result;
-            previewContainer.style.display = 'block';
+        reader.onload = function(e) {
+            previewImg.src = e.target.result;
+            previewContainer.classList.remove('escondido');
         }
         reader.readAsDataURL(arquivo);
     }
 });
 
-document.getElementById('formCadastro').addEventListener('submit', async (e) => {
+form.addEventListener('submit', async function(e) {
     e.preventDefault();
-    const formData = new FormData(e.target);
-    const response = await fetch('/api/candidatos', {
-        method: 'POST',
-        body: formData
-    });
+    feedback.textContent = "Salvando...";
+    const formData = new FormData(form);
 
-    const result = await response.json();
-    if (result.error) {
-        alert("Erro: " + result.error);
-    } else {
-        alert(result.message);
-        e.target.reset();
-        previewContainer.style.display = 'none';
+    try {
+        const resultado = await service.salvar(formData);
+        
+        if (resultado.error) {
+            throw new Error(resultado.error);
+        }
+
+        feedback.className = "feedback-msg sucesso";
+        feedback.textContent = "✅ " + resultado.message;
+        
+        // Limpa form e atualiza lista
+        form.reset();
+        previewContainer.classList.add('escondido');
         carregarLista();
+
+    } catch (erro) {
+        feedback.className = "feedback-msg erro";
+        feedback.textContent = "❌ Erro: " + erro.message;
     }
 });
 
+// Carregar Lista (READ)
 async function carregarLista() {
-    const turma = document.getElementById('turma').value;
+    const turma = selectTurma.value;
     if (!turma) return;
 
-    const response = await fetch(`/api/candidatos/${turma}`);
-    const candidatos = await response.json();
+    listaContainer.innerHTML = '<p>Carregando...</p>';
     
-    const container = document.getElementById('lista-candidatos');
-    container.innerHTML = '';
+    const candidatos = await service.listarPorTurma(turma);
+    
+    listaContainer.innerHTML = ''; // Limpa container
 
+    if (candidatos.length === 0) {
+        listaContainer.innerHTML = '<p class="aviso-vazio">Nenhum candidato nesta turma.</p>';
+        return;
+    }
+
+    // Cria os cards
     candidatos.forEach(cand => {
-        const item = document.createElement('div');
-        item.className = 'candidato-card';
-        item.innerHTML = `
-            <img src="/static/${cand.foto}" alt="${cand.nome}" style="width:80px; height:80px; border-radius:50%; object-fit:cover;">
-            <p><strong>${cand.nome}</strong></p>
-            <button onclick="deletarCandidato(${cand.id})">Excluir</button>
+        const card = document.createElement('div');
+        card.className = 'candidato-card';
+        card.innerHTML = `
+            <img src="../static/${cand.foto}" alt="${cand.nome}" class="candidato-foto">
+            <div class="candidato-nome">${cand.nome}</div>
+            <div class="candidato-numero">Chapa: ${cand.numero}</div>
+            <button onclick="deletarCandidato(${cand.id})" class="btn-deletar">Excluir</button>
         `;
-        container.appendChild(item);
+        listaContainer.appendChild(card);
     });
 }
 
 async function deletarCandidato(id) {
-    if (confirm("Excluir candidato?")) {
-        await fetch(`/api/candidatos/${id}`, { method: 'DELETE' });
-        carregarLista();
+    if (confirm("Tem certeza que deseja excluir este candidato?")) {
+        await service.deletar(id);
+        carregarLista(); 
     }
 }
