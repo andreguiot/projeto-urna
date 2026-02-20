@@ -57,9 +57,20 @@ h2 {
     padding-bottom: 0.5rem;
 }
 
-/* Formulário */
+/* Formulário e Filtros */
 .grupo-input {
     margin-bottom: 1.2rem;
+}
+
+/* NOVO: Classe para colocar os filtros de segmento, ano e turma lado a lado */
+.linha-filtros {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+.linha-filtros .grupo-input {
+    flex: 1; /* Divide o espaço igualmente */
+    min-width: 120px; /* Garante que não fiquem muito esmagados se a tela for menor */
 }
 
 label {
@@ -80,6 +91,12 @@ input, select {
 input:focus, select:focus {
     border-color: var(--primary);
     outline: none;
+}
+
+input:disabled, select:disabled {
+    background-color: #f8f9fa;
+    cursor: not-allowed;
+    opacity: 0.7;
 }
 
 /* Botão de Upload */
@@ -130,6 +147,22 @@ input:focus, select:focus {
     transform: scale(0.98);
 }
 
+.header-lista {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.btn-refresh {
+    padding: 0.5rem 1rem;
+    border: none;
+    background: var(--secondary);
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
 /* Lista de Candidatos (Grid Cards) */
 .grid-candidatos {
     display: grid;
@@ -176,6 +209,13 @@ input:focus, select:focus {
     cursor: pointer;
     font-size: 0.8rem;
     text-decoration: underline;
+}
+
+.aviso-vazio {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 3rem;
+    color: #999;
 }
 
 .feedback-msg {

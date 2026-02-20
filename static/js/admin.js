@@ -18,14 +18,77 @@ class CandidatoService {
 }
 
 const service = new CandidatoService();
+
+// --- MAPEAMENTO DAS TURMAS ---
+const anosPorSegmento = {
+    "INF" : ["1º Ano"],
+    "EF1": ["2º Ano", "3º Ano", "4º Ano", "5º Ano"],
+    "EF2": ["6º Ano", "7º Ano", "8º Ano", "9º Ano"],
+    "EM": ["1ª Série", "2ª Série", "3ª Série"]
+};
+
+const turmasPorAno = {
+    "1º Ano": ["111M", "112M", "113T", "114T", "115T", "116T", "117T"],
+    "2º Ano": ["121M", "122M", "123T", "124T", "125T", "126T", "127T"],
+    "3º Ano": ["131M", "132M", "133T", "134T", "135T", "136T"],
+    "4º Ano": ["141M", "142M", "143T", "144T", "145T", "146T", "147T"],
+    "5º Ano": ["151M", "152M", "153M", "154T", "155T", "156T", "157T"],
+    "6º Ano": ["161M", "162M", "163M", "164M", "165M", "166M", "167M", "168M"],
+    "7º Ano": ["171M", "172M", "173M", "174M", "175M", "176M", "177M"],
+    "8º Ano": ["181M", "182M", "183M", "184M", "185M", "186M", "187M"],
+    "9º Ano": ["191M", "192M", "193M", "194M", "195M", "196M"],
+    "1ª Série": ["211M", "212M", "213M", "214M", "215M", "216M"],
+    "2ª Série": ["221M", "222M", "223M", "224M", "225M"],
+    "3ª Série": ["231M", "232M", "233M", "234M", "235M"]
+};
+
+// Elementos da interface
 const form = document.getElementById('formCadastro');
 const inputFoto = document.getElementById('foto');
 const previewContainer = document.getElementById('preview-container');
 const previewImg = document.getElementById('preview-img');
+const selectSegmento = document.getElementById('select-segmento');
+const selectAno = document.getElementById('select-ano');
 const selectTurma = document.getElementById('turma');
 const listaContainer = document.getElementById('lista-candidatos');
 const feedback = document.getElementById('feedback');
 
+// Lógica do Filtro em 3 Passos
+selectSegmento.addEventListener('change', () => {
+    const segmentoSelecionado = selectSegmento.value;
+    const anos = anosPorSegmento[segmentoSelecionado] || [];
+    
+    // Popula os Anos
+    selectAno.innerHTML = '<option value="" disabled selected>Selecione o Ano...</option>';
+    anos.forEach(ano => {
+        selectAno.innerHTML += `<option value="${ano}">${ano}</option>`;
+    });
+    
+    selectAno.disabled = false;
+    
+    // Reseta as turmas
+    selectTurma.innerHTML = '<option value="" disabled selected>Aguardando ano...</option>';
+    selectTurma.disabled = true;
+    listaContainer.innerHTML = '<p class="aviso-vazio">Selecione uma turma para ver os candidatos.</p>';
+});
+
+selectAno.addEventListener('change', () => {
+    const anoSelecionado = selectAno.value;
+    const turmas = turmasPorAno[anoSelecionado] || [];
+    
+    // Limpa e popula o select de turmas
+    selectTurma.innerHTML = '<option value="" disabled selected>Selecione a turma...</option>';
+    turmas.forEach(turma => {
+        selectTurma.innerHTML += `<option value="${turma}">${turma}</option>`;
+    });
+    
+    selectTurma.disabled = false; 
+    
+    // Como a turma mudou/zerou, limpamos a lista da tela
+    listaContainer.innerHTML = '<p class="aviso-vazio">Selecione uma turma para ver os candidatos.</p>';
+});
+
+// Prévia da Imagem
 inputFoto.addEventListener('change', function(e) {
     const arquivo = e.target.files[0];
     if (arquivo) {
@@ -38,6 +101,7 @@ inputFoto.addEventListener('change', function(e) {
     }
 });
 
+// Salvar Formulário
 form.addEventListener('submit', async function(e) {
     e.preventDefault();
     feedback.textContent = "Salvando...";
@@ -52,9 +116,16 @@ form.addEventListener('submit', async function(e) {
 
         feedback.className = "feedback-msg sucesso";
         feedback.textContent = "✅ " + resultado.message;
+        const turmaAtual = selectTurma.value;
+        const anoAtual = selectAno.value;
+        const segmentoAtual = selectSegmento.value;
         
-        // Limpa form e atualiza lista
         form.reset();
+        
+        selectSegmento.value = segmentoAtual;
+        selectAno.value = anoAtual;
+        selectTurma.value = turmaAtual;
+        
         previewContainer.classList.add('escondido');
         carregarLista();
 

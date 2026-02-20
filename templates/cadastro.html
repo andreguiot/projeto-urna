@@ -11,7 +11,7 @@
 
     <header class="header-topo">
         <h1>Gestão de Candidatos</h1>
-        <p>Cadastro de Alunos</p>
+        <p>Cadastro de Alunos - La Salle Abel</p>
     </header>
 
     <main class="container">
@@ -20,14 +20,31 @@
             <h2>Novo Candidato</h2>
             <form id="formCadastro">
 
-                <div class="grupo-input">
-                    <label for="turma">Turma</label>
-                    <select id="turma" name="turma" required onchange="carregarLista()">
-                        <option value="" disabled selected>Selecione...</option>
-                        <option value="01">Turma 01</option>
-                        <option value="02">Turma 02</option>
-                        <option value="03">Turma 03</option>
-                    </select>
+                <div class="linha-filtros">
+                    <div class="grupo-input">
+                        <label for="select-segmento">Segmento</label>
+                        <select id="select-segmento" required>
+                            <option value="" disabled selected>Segmento...</option>
+                            <option value="INF">Infantil</option>
+                            <option value="EF1">Fundamental I</option>
+                            <option value="EF2">Fundamental II</option>
+                            <option value="EM">Ensino Médio</option>
+                        </select>
+                    </div>
+
+                    <div class="grupo-input">
+                        <label for="select-ano">Ano/Série</label>
+                        <select id="select-ano" required disabled>
+                            <option value="" disabled selected>Aguardando...</option>
+                        </select>
+                    </div>
+
+                    <div class="grupo-input">
+                        <label for="turma">Turma</label>
+                        <select id="turma" name="turma" required disabled onchange="carregarLista()">
+                            <option value="" disabled selected>Aguardando...</option>
+                        </select>
+                    </div>
                 </div>
 
                 <div class="grupo-input">
