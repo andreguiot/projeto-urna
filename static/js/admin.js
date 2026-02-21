@@ -151,14 +151,22 @@ async function carregarLista() {
         return;
     }
 
-    // Cria os cards
+    // Cria os cards com Sexo e Número Automático
     candidatos.forEach(cand => {
         const card = document.createElement('div');
         card.className = 'candidato-card';
+        const iconeSexo = cand.sexo === 'Feminino' ? '' : '';
+        
         card.innerHTML = `
-            <img src="../static/${cand.foto}" alt="${cand.nome}" class="candidato-foto">
+            <img src="/static/${cand.foto}" alt="${cand.nome}" class="candidato-foto">
             <div class="candidato-nome">${cand.nome}</div>
-            <div class="candidato-numero">Chapa: ${cand.numero}</div>
+            
+            <div style="font-size: 0.85rem; color: #555; margin-top: 5px;">
+                ${iconeSexo} ${cand.sexo}
+            </div>
+            
+            <div class="candidato-numero" style="font-weight: bold;">Chapa: ${cand.numero}</div>
+            
             <button onclick="deletarCandidato(${cand.id})" class="btn-deletar">Excluir</button>
         `;
         listaContainer.appendChild(card);
