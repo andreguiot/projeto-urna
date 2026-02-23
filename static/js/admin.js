@@ -45,6 +45,8 @@ const turmasPorAno = {
 // Elementos da interface
 const form = document.getElementById('formCadastro');
 const inputFoto = document.getElementById('foto');
+const checkSemFoto = document.getElementById('sem_foto');
+const areaUpload = document.getElementById('area-upload');
 const previewContainer = document.getElementById('preview-container');
 const previewImg = document.getElementById('preview-img');
 const selectSegmento = document.getElementById('select-segmento');
@@ -53,20 +55,28 @@ const selectTurma = document.getElementById('turma');
 const listaContainer = document.getElementById('lista-candidatos');
 const feedback = document.getElementById('feedback');
 
+//checkbox de Sem Foto
+checkSemFoto.addEventListener('change', () => {
+    if (checkSemFoto.checked) {
+        areaUpload.style.opacity = "0.5";
+        areaUpload.style.pointerEvents = "none";
+        inputFoto.required = false;
+        inputFoto.value = "";
+        previewContainer.classList.add('escondido');
+    } else {
+        areaUpload.style.opacity = "1";
+        areaUpload.style.pointerEvents = "auto";
+        inputFoto.required = true;
+    }
+});
+
 // Lógica do Filtro em 3 Passos
 selectSegmento.addEventListener('change', () => {
     const segmentoSelecionado = selectSegmento.value;
     const anos = anosPorSegmento[segmentoSelecionado] || [];
-    
-    // Popula os Anos
     selectAno.innerHTML = '<option value="" disabled selected>Selecione o Ano...</option>';
-    anos.forEach(ano => {
-        selectAno.innerHTML += `<option value="${ano}">${ano}</option>`;
-    });
-    
+    anos.forEach(ano => { selectAno.innerHTML += `<option value="${ano}">${ano}</option>`; });
     selectAno.disabled = false;
-    
-    // Reseta as turmas
     selectTurma.innerHTML = '<option value="" disabled selected>Aguardando ano...</option>';
     selectTurma.disabled = true;
     listaContainer.innerHTML = '<p class="aviso-vazio">Selecione uma turma para ver os candidatos.</p>';
@@ -75,16 +85,9 @@ selectSegmento.addEventListener('change', () => {
 selectAno.addEventListener('change', () => {
     const anoSelecionado = selectAno.value;
     const turmas = turmasPorAno[anoSelecionado] || [];
-    
-    // Limpa e popula o select de turmas
     selectTurma.innerHTML = '<option value="" disabled selected>Selecione a turma...</option>';
-    turmas.forEach(turma => {
-        selectTurma.innerHTML += `<option value="${turma}">${turma}</option>`;
-    });
-    
+    turmas.forEach(turma => { selectTurma.innerHTML += `<option value="${turma}">${turma}</option>`; });
     selectTurma.disabled = false; 
-    
-    // Como a turma mudou/zerou, limpamos a lista da tela
     listaContainer.innerHTML = '<p class="aviso-vazio">Selecione uma turma para ver os candidatos.</p>';
 });
 
@@ -109,64 +112,53 @@ form.addEventListener('submit', async function(e) {
 
     try {
         const resultado = await service.salvar(formData);
-        
-        if (resultado.error) {
-            throw new Error(resultado.error);
-        }
+        if (resultado.error) throw new Error(resultado.error);
 
         feedback.className = "feedback-msg sucesso";
         feedback.textContent = "✅ " + resultado.message;
-        const turmaAtual = selectTurma.value;
-        const anoAtual = selectAno.value;
-        const segmentoAtual = selectSegmento.value;
         
+        const backup = { s: selectSegmento.value, a: selectAno.value, t: selectTurma.value };
         form.reset();
         
-        selectSegmento.value = segmentoAtual;
-        selectAno.value = anoAtual;
-        selectTurma.value = turmaAtual;
+        selectSegmento.value = backup.s;
+        selectAno.value = backup.a;
+        selectTurma.value = backup.t;
         
+        areaUpload.style.opacity = "1";
+        areaUpload.style.pointerEvents = "auto";
+        inputFoto.required = true;
         previewContainer.classList.add('escondido');
-        carregarLista();
 
+        carregarLista();
     } catch (erro) {
         feedback.className = "feedback-msg erro";
         feedback.textContent = "❌ Erro: " + erro.message;
     }
 });
 
-// Carregar Lista (READ)
 async function carregarLista() {
     const turma = selectTurma.value;
     if (!turma) return;
-
     listaContainer.innerHTML = '<p>Carregando...</p>';
-    
     const candidatos = await service.listarPorTurma(turma);
-    
-    listaContainer.innerHTML = ''; // Limpa container
+    listaContainer.innerHTML = ''; 
 
     if (candidatos.length === 0) {
         listaContainer.innerHTML = '<p class="aviso-vazio">Nenhum candidato nesta turma.</p>';
         return;
     }
 
-    // Cria os cards com Sexo e Número Automático
     candidatos.forEach(cand => {
         const card = document.createElement('div');
         card.className = 'candidato-card';
-        const iconeSexo = cand.sexo === 'Feminino' ? '' : '';
+        // Se não tiver foto, usamos uma imagem padrão do sistema
+        const fotoSrc = cand.foto ? `/static/${cand.foto}` : '/static/img/default-user.png';
         
         card.innerHTML = `
-            <img src="/static/${cand.foto}" alt="${cand.nome}" class="candidato-foto">
+            <img src="${fotoSrc}" alt="${cand.nome}" class="candidato-foto">
             <div class="candidato-nome">${cand.nome}</div>
-            
-            <div style="font-size: 0.85rem; color: #555; margin-top: 5px;">
-                ${iconeSexo} ${cand.sexo}
-            </div>
-            
+            <div style="font-size: 0.85rem; color: #555; margin-top: 5px;">${cand.sexo}</div>
             <div class="candidato-numero" style="font-weight: bold;">Chapa: ${cand.numero}</div>
-            
             <button onclick="deletarCandidato(${cand.id})" class="btn-deletar">Excluir</button>
         `;
         listaContainer.appendChild(card);

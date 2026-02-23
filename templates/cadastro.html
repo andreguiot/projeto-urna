@@ -10,8 +10,11 @@
 <body>
 
     <header class="header-topo">
-        <h1>Gestão de Candidatos</h1>
-        <p>Cadastro de Alunos - La Salle Abel</p>
+        <div class="texto-topo">
+            <h1>Gestão de Candidatos</h1>
+            <p>Cadastro de Alunos - La Salle Abel</p>
+        </div>
+        <img class="logo" src="{{ url_for('static', filename='images/logobranca.webp') }}" alt="">
     </header>
 
     <main class="container">
@@ -59,7 +62,13 @@
                         <option value="Masculino">Masculino</option>
                     </select>
                 </div>
-                <div class="grupo-input upload-area">
+
+                <div class="grupo-input" style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                    <input type="checkbox" id="sem_foto" name="sem_foto" style="width: auto;">
+                    <label for="sem_foto" style="margin-bottom: 0; cursor: pointer;">Aluno não possui foto disponível</label>
+                </div>
+
+                <div id="area-upload" class="grupo-input upload-area">
                     <label for="foto" class="upload-label">
                         <span>📸 Carregar Foto do Aluno</span>
                         <input type="file" id="foto" name="foto" accept="image/*" required>
@@ -74,7 +83,6 @@
             <div id="feedback" class="feedback-msg"></div>
         </section>
 
-        <!-- Lista de Cadastrados -->
         <section class="card lista-section">
             <div class="header-lista">
                 <h2>Candidatos da Turma</h2>

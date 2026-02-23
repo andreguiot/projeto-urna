@@ -26,7 +26,22 @@ body {
     padding: 1.5rem;
     text-align: center;
     box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
+
+.logo {
+    width: 150px;
+    position: absolute;
+    left: 2rem;
+}
+
+.texto-topo {
+    justify-self: center;
+    align-self: center;
+}
+
 
 .container {
     max-width: 1200px;

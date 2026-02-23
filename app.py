@@ -10,19 +10,18 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 DB_CONFIG = {
-    'dbname': 'urna_db',
+    'dbname': 'urna-db',
     'user': 'postgres',
     'password': 'root',
     'host': 'localhost',
-    'port': '5432'
+    'port': '5433'
 }
 
 def get_db_connection():
     try:
         conn = psycopg2.connect(**DB_CONFIG)
         return conn
-    except UnicodeDecodeError:
-        print("Erro de conexão detectado.")
+    except Exception:
         raise Exception("Erro ao conectar no Postgres.")
 
 @app.route('/')
@@ -31,36 +30,36 @@ def index():
 
 @app.route('/api/candidatos', methods=['POST'])
 def cadastrar_candidato():
-    """Recebe o formulário e chama a Procedure SQL"""
+    """Recebe o formulário e salva o candidato (foto opcional)"""
     try:
         nome = request.form['nome']
         sexo = request.form['sexo'] 
         turma = request.form['turma']
-        foto = request.files['foto']
+        sem_foto = 'sem_foto' in request.form
+        
+        foto = request.files.get('foto')
+        caminho_web = None
 
-        if foto:
+        # Só processa a foto se o checkbox não estiver marcado e o arquivo existir
+        if not sem_foto and foto and foto.filename != '':
             codigo_unico = uuid.uuid4().hex[:6]
             filename = secure_filename(f"{turma}_{sexo[:1]}_{codigo_unico}_{foto.filename}")
             caminho_fisico = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             caminho_web = f"uploads/{filename}" 
-            
             foto.save(caminho_fisico)
 
-            conn = get_db_connection()
-            cur = conn.cursor()
-            cur.execute("SELECT sp_cadastrar_candidato(%s, %s, %s, %s)", 
-                        (nome, sexo, turma, caminho_web))
-            conn.commit()
-            cur.close()
-            conn.close()
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("SELECT sp_cadastrar_candidato(%s, %s, %s, %s)", 
+                    (nome, sexo, turma, caminho_web))
+        conn.commit()
+        cur.close()
+        conn.close()
 
-            return jsonify({'message': 'Candidato cadastrado com sucesso!'}), 201
-        
-        return jsonify({'error': 'Foto é obrigatória'}), 400
+        return jsonify({'message': 'Candidato cadastrado com sucesso!'}), 201
 
     except Exception as e:
-        error_msg = str(e).encode('utf-8', errors='replace').decode('utf-8')
-        return jsonify({'error': error_msg}), 500
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/candidatos/<turma>', methods=['GET'])
 def listar_por_turma(turma):
