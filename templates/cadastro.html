@@ -14,7 +14,7 @@
             <h1>Gestão de Candidatos</h1>
             <p>Cadastro de Alunos - La Salle Abel</p>
         </div>
-        <img class="logo" src="{{ url_for('static', filename='images/logobranca.webp') }}" alt="">
+        <img class="logo" src="{{ url_for('static', filename='images/logobranca.webp') }}" alt="Logo">
     </header>
 
     <main class="container">
@@ -64,13 +64,13 @@
                     </select>
                 </div>
 
-                <div class="area-checkboxes">
-                    <div class="item-check">
+                <div class="opcoes-candidato">
+                    <div class="controle-checkbox">
                         <input type="checkbox" id="sem_foto" name="sem_foto">
                         <label for="sem_foto">Aluno não possui foto disponível</label>
                     </div>
-                    <!-- Novo Checkbox: Aluno Novo -->
-                    <div class="item-check">
+                    
+                    <div class="controle-checkbox">
                         <input type="checkbox" id="is_novo" name="is_novo">
                         <label for="is_novo">Aluno Novo (Transferido/Ingressante)</label>
                     </div>
@@ -104,7 +104,7 @@
 
     </main>
 
-    <input type="file" id="input-upload-rapido" style="display: none;" accept="image/*">
+    <input type="file" id="input-upload-rapido" class="escondido" accept="image/*">
 
     <script src="../static/js/admin.js"></script>
 </body>

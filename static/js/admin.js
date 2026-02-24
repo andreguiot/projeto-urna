@@ -1,37 +1,28 @@
 class CandidatoService {
     async salvar(formData) {
-        const response = await fetch('/api/candidatos', {
-            method: 'POST',
-            body: formData
-        });
+        const response = await fetch('/api/candidatos', { method: 'POST', body: formData });
         return await response.json();
     }
-
     async listarPorTurma(turma) {
         const response = await fetch(`/api/candidatos/${turma}`);
         return await response.json();
     }
-
     async deletar(id) {
         await fetch(`/api/candidatos/${id}`, { method: 'DELETE' });
     }
-
     async atualizarFoto(id, arquivo) {
         const formData = new FormData();
         formData.append('foto', arquivo);
-        const response = await fetch(`/api/candidatos/${id}/foto`, {
-            method: 'PATCH',
-            body: formData
-        });
+        const response = await fetch(`/api/candidatos/${id}/foto`, { method: 'PATCH', body: formData });
         return await response.json();
     }
 }
 
 const service = new CandidatoService();
 
-// --- MAPEAMENTO DAS TURMAS ---
+// Mapeamentos
 const anosPorSegmento = {
-    "INF" : ["1º Ano"],
+    "INF": ["1º Ano"],
     "EF1": ["2º Ano", "3º Ano", "4º Ano", "5º Ano"],
     "EF2": ["6º Ano", "7º Ano", "8º Ano", "9º Ano"],
     "EM": ["1ª Série", "2ª Série", "3ª Série"]
@@ -52,7 +43,7 @@ const turmasPorAno = {
     "3ª Série": ["231M", "232M", "233M", "234M", "235M"]
 };
 
-// Elementos
+// Elementos DOM
 const form = document.getElementById('formCadastro');
 const inputFoto = document.getElementById('foto');
 const checkSemFoto = document.getElementById('sem_foto');
@@ -69,58 +60,50 @@ const inputUploadRapido = document.getElementById('input-upload-rapido');
 
 let idSendoEditado = null;
 
-// Checkbox Sem Foto
 checkSemFoto.addEventListener('change', () => {
     if (checkSemFoto.checked) {
-        areaUpload.style.opacity = "0.5";
-        areaUpload.style.pointerEvents = "none";
+        areaUpload.classList.add('desabilitado');
         inputFoto.required = false;
         inputFoto.value = "";
         previewContainer.classList.add('escondido');
     } else {
-        areaUpload.style.opacity = "1";
-        areaUpload.style.pointerEvents = "auto";
+        areaUpload.classList.remove('desabilitado');
         inputFoto.required = true;
     }
 });
 
-// Filtros
 selectSegmento.addEventListener('change', () => {
-    const segmentoSelecionado = selectSegmento.value;
-    const anos = anosPorSegmento[segmentoSelecionado] || [];
+    const anos = anosPorSegmento[selectSegmento.value] || [];
     selectAno.innerHTML = '<option value="" disabled selected>Selecione o Ano...</option>';
-    anos.forEach(ano => { selectAno.innerHTML += `<option value="${ano}">${ano}</option>`; });
+    anos.forEach(ano => selectAno.innerHTML += `<option value="${ano}">${ano}</option>`);
     selectAno.disabled = false;
     selectTurma.disabled = true;
 });
 
 selectAno.addEventListener('change', () => {
-    const anoSelecionado = selectAno.value;
-    const turmas = turmasPorAno[anoSelecionado] || [];
+    const turmas = turmasPorAno[selectAno.value] || [];
     selectTurma.innerHTML = '<option value="" disabled selected>Selecione a turma...</option>';
-    turmas.forEach(t => { selectTurma.innerHTML += `<option value="${t}">${t}</option>`; });
+    turmas.forEach(t => selectTurma.innerHTML += `<option value="${t}">${t}</option>`);
     selectTurma.disabled = false; 
 });
 
-inputFoto.addEventListener('change', function(e) {
-    const arquivo = e.target.files[0];
-    if (arquivo) {
+inputFoto.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) {
         const reader = new FileReader();
         reader.onload = (e) => {
             previewImg.src = e.target.result;
             previewContainer.classList.remove('escondido');
-        }
-        reader.readAsDataURL(arquivo);
+        };
+        reader.readAsDataURL(file);
     }
 });
 
-// Salvar
-form.addEventListener('submit', async function(e) {
+// Salvar Candidato
+form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    feedback.textContent = "Salvando...";
+    feedback.textContent = "Processando...";
     const formData = new FormData(form);
-    
-    // Garantir que enviamos o booleano explicitamente se necessário
     formData.set('is_novo', checkIsNovo.checked);
 
     try {
@@ -128,52 +111,44 @@ form.addEventListener('submit', async function(e) {
         if (res.error) throw new Error(res.error);
 
         feedback.className = "feedback-msg sucesso";
-        feedback.textContent = "✅ " + res.message;
+        feedback.textContent = "✅ Salvo com sucesso!";
         
-        const backup = { s: selectSegmento.value, a: selectAno.value, t: selectTurma.value };
+        const bkp = { s: selectSegmento.value, a: selectAno.value, t: selectTurma.value };
         form.reset();
-        selectSegmento.value = backup.s; selectAno.value = backup.a; selectTurma.value = backup.t;
-        
-        areaUpload.style.opacity = "1";
-        areaUpload.style.pointerEvents = "auto";
-        inputFoto.required = true;
+        selectSegmento.value = bkp.s; selectAno.value = bkp.a; selectTurma.value = bkp.t;
+        areaUpload.classList.remove('desabilitado');
         previewContainer.classList.add('escondido');
         carregarLista();
     } catch (err) {
         feedback.className = "feedback-msg erro";
-        feedback.textContent = "❌ Erro: " + err.message;
+        feedback.textContent = "❌ " + err.message;
     }
 });
 
 async function carregarLista() {
     const turma = selectTurma.value;
     if (!turma) return;
-    listaContainer.innerHTML = '<p>Carregando...</p>';
+
+    listaContainer.innerHTML = '<p>Buscando...</p>';
     const candidatos = await service.listarPorTurma(turma);
     listaContainer.innerHTML = ''; 
-
     if (candidatos.length === 0) {
-        listaContainer.innerHTML = '<p class="aviso-vazio">Nenhum candidato nesta turma.</p>';
+        listaContainer.innerHTML = '<p class="aviso-vazio">Nenhum candidato.</p>';
         return;
     }
 
     candidatos.forEach(cand => {
         const card = document.createElement('div');
-        card.className = `candidato-card ${cand.is_novo ? 'badge-novo' : ''}`;
+        card.className = `candidato-card ${cand.is_novo ? 'card-novo' : ''}`;
         const fotoSrc = cand.foto ? `/static/${cand.foto}` : '/static/images/default-user.png';
-        
-        let btnAdicionar = '';
-        if (cand.is_novo && !cand.foto) {
-            btnAdicionar = `<button onclick="triggerUploadRapido(${cand.id})" class="btn-adicionar">Adicionar Foto</button>`;
-        }
-
         card.innerHTML = `
-            ${cand.is_novo ? '<span class="tag-novo">NOVO</span>' : ''}
-            <img src="${fotoSrc}" alt="${cand.nome}" class="candidato-foto">
+            ${cand.is_novo ? '<span class="badge-novo">NOVO</span>' : ''}
+            <img src="${fotoSrc}" alt="Foto" class="candidato-foto">
             <div class="candidato-nome">${cand.nome}</div>
-            <div style="font-size: 0.75rem; color: #666;">Chapa: ${cand.numero} | ${cand.sexo}</div>
+            <div class="candidato-info">${cand.sexo} | Chapa ${cand.numero}</div>
             <div class="acoes-card">
-                ${btnAdicionar}
+                ${(cand.is_novo && !cand.foto) ? 
+                    `<button onclick="abrirUploadRapido(${cand.id})" class="btn-adicionar">Adicionar Foto</button>` : ''}
                 <button onclick="deletarCandidato(${cand.id})" class="btn-deletar">Excluir</button>
             </div>
         `;
@@ -181,27 +156,23 @@ async function carregarLista() {
     });
 }
 
-function triggerUploadRapido(id) {
+function abrirUploadRapido(id) {
     idSendoEditado = id;
     inputUploadRapido.click();
 }
 
 inputUploadRapido.addEventListener('change', async (e) => {
-    const arquivo = e.target.files[0];
-    if (arquivo && idSendoEditado) {
-        const res = await service.atualizarFoto(idSendoEditado, arquivo);
-        if (res.message) {
-            carregarLista();
-        } else {
-            alert("Erro ao subir foto: " + res.error);
-        }
+    const file = e.target.files[0];
+    if (file && idSendoEditado) {
+        const res = await service.atualizarFoto(idSendoEditado, file);
+        if (res.message) carregarLista();
         idSendoEditado = null;
         inputUploadRapido.value = "";
     }
 });
 
 async function deletarCandidato(id) {
-    if (confirm("Excluir este candidato?")) {
+    if (confirm("Confirmar exclusão?")) {
         await service.deletar(id);
         carregarLista(); 
     }

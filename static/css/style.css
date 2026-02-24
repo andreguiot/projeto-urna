@@ -2,240 +2,230 @@
     --primary: #0056b3;
     --secondary: #e9ecef;
     --text: #333;
+    --text-light: #666;
     --bg: #f4f7fc;
     --white: #ffffff;
     --danger: #dc3545;
     --success: #28a745;
+    --warning: #ffc107;
 }
 
-* {
+* { 
     margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: 'League Spartan', sans-serif;
+    padding: 0; 
+    box-sizing: border-box; 
+    font-family: 'League Spartan', sans-serif; 
 }
 
-body {
+body { 
     background-color: var(--bg);
-    color: var(--text);
+    color: var(--text); 
 }
 
-.header-topo {
-    background-color: var(--primary);
-    color: var(--white);
-    padding: 1.5rem;
-    text-align: center;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    display: flex;
-    justify-content: center;
-    align-items: center;
+.header-topo { 
+    background-color: var(--primary); 
+    color: var(--white); 
+    padding: 1.5rem; 
+    text-align: center; 
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+    position: relative;
 }
 
-.logo {
-    width: 150px;
-    position: absolute;
-    left: 2rem;
+.logo { 
+    width: 120px;
+    position: absolute; 
+    left: 2rem; 
 }
 
-.texto-topo {
-    justify-self: center;
-    align-self: center;
-}
-
-
-.container {
-    max-width: 1200px;
-    margin: 2rem auto;
-    display: grid;
+/*Layout*/
+.container { 
+    max-width: 1200px; 
+    margin: 2rem auto; 
+    display: grid; 
     grid-template-columns: 1fr 1.5fr; 
-    gap: 2rem;
-    padding: 0 1rem;
+    gap: 2rem; 
+    padding: 0 1rem; 
 }
 
-@media (max-width: 768px) {
-    .container {
-        grid-template-columns: 1fr;
-    }
+@media (max-width: 900px) { 
+    .container { grid-template-columns: 1fr; } }
+
+.card { background: var(--white); padding: 2rem; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+h2 { margin-bottom: 1.5rem; color: var(--primary); border-bottom: 2px solid var(--secondary); padding-bottom: 0.5rem; }
+
+/*Form*/
+.grupo-input { 
+    margin-bottom: 1.2rem; 
 }
 
-.card {
-    background: var(--white);
-    padding: 2rem;
-    border-radius: 12px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+.linha-filtros { 
+    display: flex; 
+    gap: 1rem; 
+    flex-wrap: wrap; 
 }
-
-h2 {
-    margin-bottom: 1.5rem;
-    color: var(--primary);
-    border-bottom: 2px solid var(--secondary);
-    padding-bottom: 0.5rem;
-}
-
-/* Formulário e Filtros */
-.grupo-input {
-    margin-bottom: 1.2rem;
-}
-
-.linha-filtros {
-    display: flex;
-    gap: 1rem;
-    flex-wrap: wrap;
-}
-.linha-filtros .grupo-input {
+.linha-filtros .grupo-input { 
     flex: 1; 
     min-width: 120px; 
 }
 
-label {
-    display: block;
-    margin-bottom: 0.5rem;
-    font-weight: bold;
+label { 
+    display: block; 
+    margin-bottom: 0.5rem; 
+    font-weight: bold; 
 }
-
-input, select {
-    width: 100%;
-    padding: 0.8rem;
-    border: 2px solid var(--secondary);
-    border-radius: 8px;
+input, select { 
+    width: 100%; 
+    padding: 0.8rem; 
+    border: 2px solid var(--secondary); 
+    border-radius: 8px; 
     font-size: 1rem;
-    transition: border-color 0.3s;
 }
 
-input:focus, select:focus {
-    border-color: var(--primary);
-    outline: none;
-}
-
-input:disabled, select:disabled {
-    background-color: #f8f9fa;
-    cursor: not-allowed;
-    opacity: 0.7;
-}
-
-/* Botão de Upload */
-.upload-label {
-    border: 2px dashed var(--primary);
+/* Checkboxes */
+.opcoes-candidato {
+    background: #f8f9fa;
     padding: 1rem;
-    text-align: center;
-    cursor: pointer;
     border-radius: 8px;
-    color: var(--primary);
-    transition: background 0.3s;
-}
-
-.upload-label:hover {
-    background-color: #eef4ff;
-}
-
-.upload-label input {
-    display: none;
-}
-
-#preview-img {
-    width: 100%;
-    max-height: 200px;
-    object-fit: cover;
-    margin-top: 1rem;
-    border-radius: 8px;
-}
-
-.escondido {
-    display: none;
-}
-
-.btn-salvar {
-    width: 100%;
-    padding: 1rem;
-    background-color: var(--primary);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-size: 1.1rem;
-    font-weight: bold;
-    cursor: pointer;
-    transition: transform 0.1s;
-}
-
-.btn-salvar:active {
-    transform: scale(0.98);
-}
-
-.header-lista {
+    margin-bottom: 1.5rem;
     display: flex;
-    justify-content: space-between;
+    flex-direction: column;
+    gap: 0.8rem;
+}
+
+.controle-checkbox {
+    display: flex;
     align-items: center;
-    margin-bottom: 2rem;
+    gap: 10px;
 }
 
-.btn-refresh {
-    padding: 0.5rem 1rem;
-    border: none;
-    background: var(--secondary);
-    border-radius: 5px;
-    cursor: pointer;
+.controle-checkbox input { 
+    width: auto; 
+    cursor: pointer; 
+}
+
+.controle-checkbox label { 
+    margin-bottom: 0; 
+    cursor: pointer; 
+    font-weight: normal; 
+}
+
+/* Upload Area */
+.upload-label { 
+    border: 2px dashed var(--primary); 
+    padding: 1.2rem; 
+    display: block; 
+    text-align: center; 
+    cursor: pointer; 
+    border-radius: 8px; 
+    color: var(--primary); 
     font-weight: bold;
 }
-
-/* Lista de Candidatos (Grid Cards) */
-.grid-candidatos {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 1rem;
+.desabilitado { 
+    opacity: 0.5; 
+    pointer-events: 
+    none; 
+}
+#preview-img { 
+    width: 100%; 
+    border-radius: 8px; 
+    margin-top: 1rem; 
+    max-height: 250px; 
+    object-fit: cover; 
 }
 
-.candidato-card {
-    border: 1px solid var(--secondary);
-    border-radius: 8px;
-    padding: 1rem;
-    text-align: center;
-    position: relative;
+.btn-salvar { 
+    width: 100%; 
+    padding: 1rem; 
+    background: var(--primary); 
+    color: white; 
+    border: none; 
+    border-radius: 8px; 
+    font-size: 1.1rem; 
+    font-weight: bold; 
+    cursor: pointer; 
 }
 
-.candidato-foto {
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 3px solid var(--primary);
-    margin-bottom: 0.5rem;
+/* Lista de Candidatos */
+.grid-candidatos { 
+    display: grid; 
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); 
+    gap: 1rem; 
 }
 
-.candidato-nome {
-    font-weight: bold;
-    font-size: 0.9rem;
+.candidato-card { 
+    border: 1px solid var(--secondary); 
+    border-radius: 10px; 
+    padding: 1.2rem; 
+    text-align: center; 
+    position: relative; 
 }
 
-.candidato-numero {
-    background-color: var(--secondary);
-    padding: 0.2rem 0.5rem;
+.badge-novo {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: var(--warning);
+    font-size: 0.65rem;
+    padding: 2px 6px;
     border-radius: 4px;
-    font-size: 0.8rem;
-    margin-top: 0.5rem;
-    display: inline-block;
-}
-
-.btn-deletar {
-    margin-top: 0.5rem;
-    background: none;
-    border: none;
-    color: var(--danger);
-    cursor: pointer;
-    font-size: 0.8rem;
-    text-decoration: underline;
-}
-
-.aviso-vazio {
-    grid-column: 1 / -1;
-    text-align: center;
-    padding: 3rem;
-    color: #999;
-}
-
-.feedback-msg {
-    margin-top: 1rem;
-    text-align: center;
     font-weight: bold;
 }
-.sucesso { color: var(--success); }
-.erro { color: var(--danger); }
+
+.candidato-foto { 
+    width: 80px; 
+    height: 80px; 
+    border-radius: 50%; 
+    object-fit: cover; 
+    border: 3px solid var(--primary); 
+    margin-bottom: 0.8rem; 
+}
+
+.candidato-nome { font-weight: bold; font-size: 0.95rem; margin-bottom: 0.3rem; }
+.candidato-info { font-size: 0.8rem; color: var(--text-light); }
+
+.acoes-card { 
+    margin-top: 1rem; 
+    display: flex; 
+    flex-direction: column; 
+    gap: 8px; 
+}
+
+.btn-deletar { 
+    color: var(--danger); 
+    background: none; 
+    border: none; 
+    font-size: 0.8rem; 
+    cursor: pointer; 
+    text-decoration: underline; 
+}
+
+.btn-adicionar { 
+    background: var(--success); 
+    color: white; 
+    border: none; 
+    padding: 6px; 
+    border-radius: 5px; 
+    font-size: 0.8rem; 
+    font-weight: bold; 
+    cursor: pointer; 
+}
+
+.escondido { 
+    display: none; 
+}
+
+.feedback-msg { 
+    margin-top: 1rem; 
+    text-align: center; 
+    font-weight: bold; 
+}
+
+.sucesso { 
+    color: var(--success); 
+}
+
+.erro { 
+    color: var(--danger); 
+}
