@@ -15,6 +15,16 @@ class CandidatoService {
     async deletar(id) {
         await fetch(`/api/candidatos/${id}`, { method: 'DELETE' });
     }
+
+    async atualizarFoto(id, arquivo) {
+        const formData = new FormData();
+        formData.append('foto', arquivo);
+        const response = await fetch(`/api/candidatos/${id}/foto`, {
+            method: 'PATCH',
+            body: formData
+        });
+        return await response.json();
+    }
 }
 
 const service = new CandidatoService();
@@ -42,10 +52,11 @@ const turmasPorAno = {
     "3ª Série": ["231M", "232M", "233M", "234M", "235M"]
 };
 
-// Elementos da interface
+// Elementos
 const form = document.getElementById('formCadastro');
 const inputFoto = document.getElementById('foto');
 const checkSemFoto = document.getElementById('sem_foto');
+const checkIsNovo = document.getElementById('is_novo');
 const areaUpload = document.getElementById('area-upload');
 const previewContainer = document.getElementById('preview-container');
 const previewImg = document.getElementById('preview-img');
@@ -54,8 +65,11 @@ const selectAno = document.getElementById('select-ano');
 const selectTurma = document.getElementById('turma');
 const listaContainer = document.getElementById('lista-candidatos');
 const feedback = document.getElementById('feedback');
+const inputUploadRapido = document.getElementById('input-upload-rapido');
 
-//checkbox de Sem Foto
+let idSendoEditado = null;
+
+// Checkbox Sem Foto
 checkSemFoto.addEventListener('change', () => {
     if (checkSemFoto.checked) {
         areaUpload.style.opacity = "0.5";
@@ -70,33 +84,29 @@ checkSemFoto.addEventListener('change', () => {
     }
 });
 
-// Lógica do Filtro em 3 Passos
+// Filtros
 selectSegmento.addEventListener('change', () => {
     const segmentoSelecionado = selectSegmento.value;
     const anos = anosPorSegmento[segmentoSelecionado] || [];
     selectAno.innerHTML = '<option value="" disabled selected>Selecione o Ano...</option>';
     anos.forEach(ano => { selectAno.innerHTML += `<option value="${ano}">${ano}</option>`; });
     selectAno.disabled = false;
-    selectTurma.innerHTML = '<option value="" disabled selected>Aguardando ano...</option>';
     selectTurma.disabled = true;
-    listaContainer.innerHTML = '<p class="aviso-vazio">Selecione uma turma para ver os candidatos.</p>';
 });
 
 selectAno.addEventListener('change', () => {
     const anoSelecionado = selectAno.value;
     const turmas = turmasPorAno[anoSelecionado] || [];
     selectTurma.innerHTML = '<option value="" disabled selected>Selecione a turma...</option>';
-    turmas.forEach(turma => { selectTurma.innerHTML += `<option value="${turma}">${turma}</option>`; });
+    turmas.forEach(t => { selectTurma.innerHTML += `<option value="${t}">${t}</option>`; });
     selectTurma.disabled = false; 
-    listaContainer.innerHTML = '<p class="aviso-vazio">Selecione uma turma para ver os candidatos.</p>';
 });
 
-// Prévia da Imagem
 inputFoto.addEventListener('change', function(e) {
     const arquivo = e.target.files[0];
     if (arquivo) {
         const reader = new FileReader();
-        reader.onload = function(e) {
+        reader.onload = (e) => {
             previewImg.src = e.target.result;
             previewContainer.classList.remove('escondido');
         }
@@ -104,35 +114,34 @@ inputFoto.addEventListener('change', function(e) {
     }
 });
 
-// Salvar Formulário
+// Salvar
 form.addEventListener('submit', async function(e) {
     e.preventDefault();
     feedback.textContent = "Salvando...";
     const formData = new FormData(form);
+    
+    // Garantir que enviamos o booleano explicitamente se necessário
+    formData.set('is_novo', checkIsNovo.checked);
 
     try {
-        const resultado = await service.salvar(formData);
-        if (resultado.error) throw new Error(resultado.error);
+        const res = await service.salvar(formData);
+        if (res.error) throw new Error(res.error);
 
         feedback.className = "feedback-msg sucesso";
-        feedback.textContent = "✅ " + resultado.message;
+        feedback.textContent = "✅ " + res.message;
         
         const backup = { s: selectSegmento.value, a: selectAno.value, t: selectTurma.value };
         form.reset();
-        
-        selectSegmento.value = backup.s;
-        selectAno.value = backup.a;
-        selectTurma.value = backup.t;
+        selectSegmento.value = backup.s; selectAno.value = backup.a; selectTurma.value = backup.t;
         
         areaUpload.style.opacity = "1";
         areaUpload.style.pointerEvents = "auto";
         inputFoto.required = true;
         previewContainer.classList.add('escondido');
-
         carregarLista();
-    } catch (erro) {
+    } catch (err) {
         feedback.className = "feedback-msg erro";
-        feedback.textContent = "❌ Erro: " + erro.message;
+        feedback.textContent = "❌ Erro: " + err.message;
     }
 });
 
@@ -150,23 +159,49 @@ async function carregarLista() {
 
     candidatos.forEach(cand => {
         const card = document.createElement('div');
-        card.className = 'candidato-card';
-        // Se não tiver foto, usamos uma imagem padrão do sistema
-        const fotoSrc = cand.foto ? `/static/${cand.foto}` : '/static/img/default-user.png';
+        card.className = `candidato-card ${cand.is_novo ? 'badge-novo' : ''}`;
+        const fotoSrc = cand.foto ? `/static/${cand.foto}` : '/static/images/default-user.png';
         
+        let btnAdicionar = '';
+        if (cand.is_novo && !cand.foto) {
+            btnAdicionar = `<button onclick="triggerUploadRapido(${cand.id})" class="btn-adicionar">Adicionar Foto</button>`;
+        }
+
         card.innerHTML = `
+            ${cand.is_novo ? '<span class="tag-novo">NOVO</span>' : ''}
             <img src="${fotoSrc}" alt="${cand.nome}" class="candidato-foto">
             <div class="candidato-nome">${cand.nome}</div>
-            <div style="font-size: 0.85rem; color: #555; margin-top: 5px;">${cand.sexo}</div>
-            <div class="candidato-numero" style="font-weight: bold;">Chapa: ${cand.numero}</div>
-            <button onclick="deletarCandidato(${cand.id})" class="btn-deletar">Excluir</button>
+            <div style="font-size: 0.75rem; color: #666;">Chapa: ${cand.numero} | ${cand.sexo}</div>
+            <div class="acoes-card">
+                ${btnAdicionar}
+                <button onclick="deletarCandidato(${cand.id})" class="btn-deletar">Excluir</button>
+            </div>
         `;
         listaContainer.appendChild(card);
     });
 }
 
+function triggerUploadRapido(id) {
+    idSendoEditado = id;
+    inputUploadRapido.click();
+}
+
+inputUploadRapido.addEventListener('change', async (e) => {
+    const arquivo = e.target.files[0];
+    if (arquivo && idSendoEditado) {
+        const res = await service.atualizarFoto(idSendoEditado, arquivo);
+        if (res.message) {
+            carregarLista();
+        } else {
+            alert("Erro ao subir foto: " + res.error);
+        }
+        idSendoEditado = null;
+        inputUploadRapido.value = "";
+    }
+});
+
 async function deletarCandidato(id) {
-    if (confirm("Tem certeza que deseja excluir este candidato?")) {
+    if (confirm("Excluir este candidato?")) {
         await service.deletar(id);
         carregarLista(); 
     }

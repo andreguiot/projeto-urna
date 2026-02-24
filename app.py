@@ -30,17 +30,16 @@ def index():
 
 @app.route('/api/candidatos', methods=['POST'])
 def cadastrar_candidato():
-    """Recebe o formulário e salva o candidato (foto opcional)"""
     try:
         nome = request.form['nome']
         sexo = request.form['sexo'] 
         turma = request.form['turma']
+        is_novo = request.form.get('is_novo') == 'true'
         sem_foto = 'sem_foto' in request.form
         
         foto = request.files.get('foto')
         caminho_web = None
 
-        # Só processa a foto se o checkbox não estiver marcado e o arquivo existir
         if not sem_foto and foto and foto.filename != '':
             codigo_unico = uuid.uuid4().hex[:6]
             filename = secure_filename(f"{turma}_{sexo[:1]}_{codigo_unico}_{foto.filename}")
@@ -50,14 +49,13 @@ def cadastrar_candidato():
 
         conn = get_db_connection()
         cur = conn.cursor()
-        cur.execute("SELECT sp_cadastrar_candidato(%s, %s, %s, %s)", 
-                    (nome, sexo, turma, caminho_web))
+        cur.execute("SELECT sp_cadastrar_candidato(%s, %s, %s, %s, %s)", 
+                    (nome, sexo, turma, caminho_web, is_novo))
         conn.commit()
         cur.close()
         conn.close()
 
         return jsonify({'message': 'Candidato cadastrado com sucesso!'}), 201
-
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -65,13 +63,57 @@ def cadastrar_candidato():
 def listar_por_turma(turma):
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute("SELECT id, nome, numero_chapa, caminho_foto, sexo FROM candidatos WHERE turma = %s ORDER BY numero_chapa ASC", (turma,))
+    cur.execute("""
+        SELECT id, nome, numero_chapa, caminho_foto, sexo, is_novo 
+        FROM candidatos 
+        WHERE turma = %s 
+        ORDER BY numero_chapa ASC
+    """, (turma,))
     candidatos = cur.fetchall()
     cur.close()
     conn.close()
     
-    lista = [{'id': c[0], 'nome': c[1], 'numero': c[2], 'foto': c[3], 'sexo': c[4]} for c in candidatos]
+    lista = [{
+        'id': c[0], 
+        'nome': c[1], 
+        'numero': c[2], 
+        'foto': c[3], 
+        'sexo': c[4],
+        'is_novo': c[5]
+    } for c in candidatos]
     return jsonify(lista)
+
+@app.route('/api/candidatos/<int:id>/foto', methods=['PATCH'])
+def atualizar_foto(id):
+    """Permite adicionar uma foto a um candidato já existente"""
+    try:
+        foto = request.files.get('foto')
+        if not foto:
+            return jsonify({'error': 'Nenhuma foto enviada'}), 400
+
+        conn = get_db_connection()
+        cur = conn.cursor()
+    
+        cur.execute("SELECT turma, sexo FROM candidatos WHERE id = %s", (id,))
+        res = cur.fetchone()
+        if not res:
+            return jsonify({'error': 'Candidato não encontrado'}), 404
+        
+        turma, sexo = res
+        codigo_unico = uuid.uuid4().hex[:6]
+        filename = secure_filename(f"{turma}_{sexo[:1]}_{codigo_unico}_{foto.filename}")
+        caminho_fisico = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        caminho_web = f"uploads/{filename}" 
+        foto.save(caminho_fisico)
+
+        cur.execute("UPDATE candidatos SET caminho_foto = %s WHERE id = %s", (caminho_web, id))
+        conn.commit()
+        cur.close()
+        conn.close()
+
+        return jsonify({'message': 'Foto adicionada com sucesso!', 'caminho': caminho_web})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/candidatos/<int:id>', methods=['DELETE'])
 def deletar_candidato(id):

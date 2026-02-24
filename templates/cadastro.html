@@ -54,6 +54,7 @@
                     <label for="nome">Nome Completo</label>
                     <input type="text" id="nome" name="nome" placeholder="Ex: João da Silva" required>
                 </div>
+                
                 <div class="grupo-input">
                     <label for="sexo">Sexo do Candidato</label>
                     <select id="sexo" name="sexo" required>
@@ -63,9 +64,16 @@
                     </select>
                 </div>
 
-                <div class="grupo-input" style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
-                    <input type="checkbox" id="sem_foto" name="sem_foto" style="width: auto;">
-                    <label for="sem_foto" style="margin-bottom: 0; cursor: pointer;">Aluno não possui foto disponível</label>
+                <div class="area-checkboxes">
+                    <div class="item-check">
+                        <input type="checkbox" id="sem_foto" name="sem_foto">
+                        <label for="sem_foto">Aluno não possui foto disponível</label>
+                    </div>
+                    <!-- Novo Checkbox: Aluno Novo -->
+                    <div class="item-check">
+                        <input type="checkbox" id="is_novo" name="is_novo">
+                        <label for="is_novo">Aluno Novo (Transferido/Ingressante)</label>
+                    </div>
                 </div>
 
                 <div id="area-upload" class="grupo-input upload-area">
@@ -95,6 +103,9 @@
         </section>
 
     </main>
+
+    <input type="file" id="input-upload-rapido" style="display: none;" accept="image/*">
+
     <script src="../static/js/admin.js"></script>
 </body>
 </html>
