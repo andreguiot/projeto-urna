@@ -32,3 +32,12 @@ BEGIN
     VALUES (p_nome, p_sexo, v_proximo_numero, p_turma, p_foto_path, p_is_novo);
 END;
 $$ LANGUAGE plpgsql;
+
+-- tabela pra guardar os votos, vou precisar disso na urna
+CREATE TABLE IF NOT EXISTS votos_turma (
+    id SERIAL PRIMARY KEY,
+    turma VARCHAR(20) NOT NULL,
+    numero_chapa INTEGER,
+    tipo_voto VARCHAR(20) NOT NULL,
+    data_hora TIMESTAMP DEFAULT NOW()
+);
