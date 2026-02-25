@@ -124,5 +124,28 @@ def deletar_candidato(id):
     conn.close()
     return jsonify({'message': 'Removido'})
 
+@app.route('/api/votos', methods=['POST'])
+def registrar_votos():
+    data = request.get_json()
+    turma = data.get('turma')
+    votos = data.get('votos', [])
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    for voto in votos:
+        numero = voto.get('numero')
+        tipo = voto.get('tipo')
+        # salva o voto direto, sem filtrar tipo ainda
+        cur.execute(
+            "INSERT INTO votos_turma (turma, numero_chapa, tipo_voto) VALUES (%s, %s, %s)",
+            (turma, numero, tipo)
+        )
+
+    conn.commit()
+    cur.close()
+    conn.close()
+    return jsonify({'message': 'Votos registrados', 'quantidade': len(votos)})
+
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    app.run(debug=True, port=5000)
