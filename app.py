@@ -127,8 +127,15 @@ def deletar_candidato(id):
 @app.route('/api/votos', methods=['POST'])
 def registrar_votos():
     data = request.get_json()
+    if not data:
+        return jsonify({'error': 'JSON inválido'}), 400
+
     turma = data.get('turma')
     votos = data.get('votos', [])
+
+    # tava quebrando quando vinha sem turma
+    if not turma or not isinstance(votos, list):
+        return jsonify({'error': 'Dados incompletos'}), 400
 
     conn = get_db_connection()
     cur = conn.cursor()
