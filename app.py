@@ -172,12 +172,29 @@ def apurar_turma(turma):
             'classificacao': r[4]
         })
 
+    # esqueci de contar brancos e nulos antes
+    cur.execute(
+        """
+        SELECT tipo_voto, COUNT(*)
+        FROM votos_turma
+        WHERE turma = %s
+        GROUP BY tipo_voto
+        """,
+        (turma,)
+    )
+    contagem = {'VALIDO': 0, 'BRANCO': 0, 'NULO': 0}
+    for tipo, qtd in cur.fetchall():
+        contagem[tipo] = qtd
+
     cur.close()
     conn.close()
 
     return jsonify({
         'turma': turma,
-        'candidatos': candidatos
+        'candidatos': candidatos,
+        'votos_validos': contagem['VALIDO'],
+        'votos_brancos': contagem['BRANCO'],
+        'votos_nulos': contagem['NULO']
     })
 
 if __name__ == '__main__':
