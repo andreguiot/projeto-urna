@@ -154,5 +154,31 @@ def registrar_votos():
     conn.close()
     return jsonify({'message': 'Votos registrados', 'quantidade': len(votos)})
 
+@app.route('/api/apuracao/<turma>', methods=['GET'])
+def apurar_turma(turma):
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    cur.execute("SELECT * FROM sp_apurar_turma(%s)", (turma,))
+    rows = cur.fetchall()
+
+    candidatos = []
+    for r in rows:
+        candidatos.append({
+            'id': r[0],
+            'nome': r[1],
+            'sexo': r[2],
+            'votos': r[3],
+            'classificacao': r[4]
+        })
+
+    cur.close()
+    conn.close()
+
+    return jsonify({
+        'turma': turma,
+        'candidatos': candidatos
+    })
+
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
