@@ -41,3 +41,27 @@ CREATE TABLE IF NOT EXISTS votos_turma (
     tipo_voto VARCHAR(20) NOT NULL,
     data_hora TIMESTAMP DEFAULT NOW()
 );
+
+-- função pra apurar os votos de uma turma
+CREATE OR REPLACE FUNCTION sp_apurar_turma(
+    p_turma VARCHAR
+) RETURNS TABLE (
+    id_candidato INTEGER,
+    nome VARCHAR,
+    sexo VARCHAR,
+    votos INTEGER,
+    classificacao BIGINT
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        c.id,
+        c.nome,
+        c.sexo,
+        c.votos,
+        DENSE_RANK() OVER (ORDER BY c.votos DESC) AS classificacao
+    FROM candidatos c
+    WHERE c.turma = p_turma
+    ORDER BY c.votos DESC;
+END;
+$$ LANGUAGE plpgsql;
