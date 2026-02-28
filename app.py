@@ -197,5 +197,55 @@ def apurar_turma(turma):
         'votos_nulos': contagem['NULO']
     })
 
+@app.route('/api/urna/<turma>', methods=['GET'])
+def configurar_urna(turma):
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    cur.execute("SELECT * FROM sp_configurar_urna(%s)", (turma,))
+    row = cur.fetchone()
+
+    if not row:
+        cur.close()
+        conn.close()
+        return jsonify({'error': 'Turma sem configuração'}), 404
+
+    modo_voto, votos_por_aluno, candidatos_ids, eleitos_ids = row
+    candidatos_ids = candidatos_ids or []
+    eleitos_ids = eleitos_ids or []
+
+    if modo_voto == 'SEM_VOTACAO' and len(candidatos_ids) == 0:
+        cur.close()
+        conn.close()
+        return jsonify({'error': 'Turma sem candidatos'}), 404
+
+    dados_candidatos = []
+    if candidatos_ids:
+        cur.execute("""
+            SELECT id, nome, numero_chapa, caminho_foto, sexo
+            FROM candidatos
+            WHERE id = ANY(%s)
+            ORDER BY numero_chapa ASC
+        """, (candidatos_ids,))
+        for c in cur.fetchall():
+            dados_candidatos.append({
+                'id': c[0],
+                'nome': c[1],
+                'numero': c[2],
+                'foto': c[3],
+                'sexo': c[4]
+            })
+
+    cur.close()
+    conn.close()
+
+    return jsonify({
+        'turma': turma,
+        'modo_voto': modo_voto,
+        'votos_por_aluno': votos_por_aluno,
+        'candidatos_votacao': dados_candidatos,
+        'eleitos_automaticos': []
+    })
+
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
