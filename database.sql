@@ -64,4 +64,53 @@ BEGIN
     WHERE c.turma = p_turma
     ORDER BY c.votos DESC;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql;
+
+-- decide como a urna vai funcionar dependendo dos candidatos da turma
+CREATE OR REPLACE FUNCTION sp_configurar_urna(p_turma VARCHAR)
+RETURNS TABLE (
+    modo_voto TEXT,
+    votos_por_aluno INTEGER,
+    candidatos_votacao INTEGER[],
+    eleitos_automaticos INTEGER[]
+) AS $$
+DECLARE
+    qtd_m INT;
+    qtd_f INT;
+    total_candidatos INT;
+BEGIN
+    SELECT COUNT(*) INTO qtd_m FROM candidatos WHERE turma = p_turma AND sexo = 'Masculino';
+    SELECT COUNT(*) INTO qtd_f FROM candidatos WHERE turma = p_turma AND sexo = 'Feminino';
+    total_candidatos := qtd_m + qtd_f;
+
+    IF total_candidatos = 0 THEN
+        RETURN QUERY SELECT 'SEM_VOTACAO'::TEXT, 0, ARRAY[]::INTEGER[], ARRAY[]::INTEGER[];
+        RETURN;
+    END IF;
+
+    IF qtd_m > 0 AND qtd_f > 0 THEN
+        RETURN QUERY
+        SELECT
+            'DISPUTA_DUPLA'::TEXT,
+            2::INTEGER,
+            ARRAY_AGG(id)::INTEGER[],
+            ARRAY[]::INTEGER[]
+        FROM candidatos WHERE turma = p_turma;
+        RETURN;
+    END IF;
+
+    -- só um sexo com candidatos
+    IF (qtd_m > 0 AND qtd_f = 0) OR (qtd_f > 0 AND qtd_m = 0) THEN
+        RETURN QUERY
+        SELECT
+            'UNICO_SEXO'::TEXT,
+            LEAST(total_candidatos, 2)::INTEGER,
+            ARRAY_AGG(id)::INTEGER[],
+            ARRAY[]::INTEGER[]
+        FROM candidatos WHERE turma = p_turma;
+        RETURN;
+    END IF;
+
+END;
+$$ LANGUAGE plpgsql;
+
