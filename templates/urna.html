@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Urna</title>
+</head>
+<body>
+    <h1>Urna Eletrônica</h1>
+
+    <div id="area-turma">
+        <label>Turma:</label>
+        <input type="text" id="input-turma">
+        <button onclick="carregarUrna()">Carregar</button>
+    </div>
+
+    <div id="area-voto" style="display:none">
+        <p id="info-modo"></p>
+        <div id="lista-candidatos"></div>
+
+        <br>
+        <button onclick="votarBranco()">BRANCO</button>
+        <button onclick="votarNulo()">NULO</button>
+        <button onclick="confirmarVoto()">CONFIRMAR</button>
+    </div>
+
+    <script>
+        let turmaAtual = '';
+        let candidatos = [];
+        let votosSelecionados = [];
+
+        function carregarUrna() {
+            turmaAtual = document.getElementById('input-turma').value.trim();
+            if (!turmaAtual) return;
+
+            fetch('/api/urna/' + turmaAtual)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.error) {
+                        alert(data.error);
+                        return;
+                    }
+                    candidatos = data.candidatos_votacao;
+                    document.getElementById('info-modo').textContent = 'Modo: ' + data.modo_voto;
+
+                    let html = '';
+                    candidatos.forEach(c => {
+                        html += `<div>
+                            <span>${c.numero} - ${c.nome}</span>
+                            <button onclick="selecionarCandidato(${c.numero})">Votar</button>
+                        </div>`;
+                    });
+                    document.getElementById('lista-candidatos').innerHTML = html;
+                    document.getElementById('area-voto').style.display = 'block';
+                });
+        }
+
+        function selecionarCandidato(numero) {
+            // TODO: controlar limite de votos conforme votos_por_aluno
+            votosSelecionados.push({ numero: numero, tipo: 'VALIDO' });
+            alert('Candidato ' + numero + ' selecionado.');
+        }
+
+        function votarBranco() {
+            votosSelecionados.push({ numero: null, tipo: 'BRANCO' });
+        }
+
+        function votarNulo() {
+            votosSelecionados.push({ numero: null, tipo: 'NULO' });
+        }
+
+        function confirmarVoto() {
+            if (votosSelecionados.length === 0) {
+                alert('Selecione pelo menos um voto.');
+                return;
+            }
+            fetch('/api/votos', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ turma: turmaAtual, votos: votosSelecionados })
+            })
+            .then(r => r.json())
+            .then(data => {
+                alert('Votos registrados!');
+                votosSelecionados = [];
+            });
+        }
+    </script>
+</body>
+</html>
