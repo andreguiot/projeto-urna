@@ -28,6 +28,10 @@ def get_db_connection():
 def index():
     return render_template('cadastro.html')
 
+@app.route('/urna')
+def urna():
+    return render_template('urna.html')
+
 @app.route('/api/candidatos', methods=['POST'])
 def cadastrar_candidato():
     try:
