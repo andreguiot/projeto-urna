@@ -147,11 +147,20 @@ def registrar_votos():
     for voto in votos:
         numero = voto.get('numero')
         tipo = voto.get('tipo')
-        # salva o voto direto, sem filtrar tipo ainda
+        if tipo not in ('VALIDO', 'BRANCO', 'NULO'):
+            tipo = 'NULO'
+
         cur.execute(
             "INSERT INTO votos_turma (turma, numero_chapa, tipo_voto) VALUES (%s, %s, %s)",
             (turma, numero, tipo)
         )
+
+        # precisava incrementar o contador aqui, esqueci antes
+        if tipo == 'VALIDO' and numero is not None:
+            cur.execute(
+                "UPDATE candidatos SET votos = votos + 1 WHERE turma = %s AND numero_chapa = %s",
+                (turma, numero)
+            )
 
     conn.commit()
     cur.close()
