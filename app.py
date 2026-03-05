@@ -212,25 +212,40 @@ def apurar_turma(turma):
 
 @app.route('/api/urna/<turma>', methods=['GET'])
 def configurar_urna(turma):
+    turno = request.args.get('turno', '1')
+
     conn = get_db_connection()
     cur = conn.cursor()
 
-    cur.execute("SELECT * FROM sp_configurar_urna(%s)", (turma,))
-    row = cur.fetchone()
+    if turno == '2':
+        # pega todos da apuração e manda pra urna - TODO: filtrar só empatados
+        cur.execute("SELECT * FROM sp_apurar_turma(%s)", (turma,))
+        rows = cur.fetchall()
 
-    if not row:
-        cur.close()
-        conn.close()
-        return jsonify({'error': 'Turma sem configuração'}), 404
+        if not rows:
+            cur.close()
+            conn.close()
+            return jsonify({'error': 'Sem candidatos para 2 turno'}), 404
 
-    modo_voto, votos_por_aluno, candidatos_ids, eleitos_ids = row
-    candidatos_ids = candidatos_ids or []
-    eleitos_ids = eleitos_ids or []
+        candidatos_ids = [r[0] for r in rows]
+        modo_voto = 'DISPUTA_DUPLA'
+        votos_por_aluno = 2
+    else:
+        cur.execute("SELECT * FROM sp_configurar_urna(%s)", (turma,))
+        row = cur.fetchone()
 
-    if modo_voto == 'SEM_VOTACAO' and len(candidatos_ids) == 0:
-        cur.close()
-        conn.close()
-        return jsonify({'error': 'Turma sem candidatos'}), 404
+        if not row:
+            cur.close()
+            conn.close()
+            return jsonify({'error': 'Turma sem configuração'}), 404
+
+        modo_voto, votos_por_aluno, candidatos_ids, eleitos_ids = row
+        candidatos_ids = candidatos_ids or []
+
+        if modo_voto == 'SEM_VOTACAO' and len(candidatos_ids) == 0:
+            cur.close()
+            conn.close()
+            return jsonify({'error': 'Turma sem candidatos'}), 404
 
     dados_candidatos = []
     if candidatos_ids:
