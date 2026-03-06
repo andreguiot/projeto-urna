@@ -218,7 +218,6 @@ def configurar_urna(turma):
     cur = conn.cursor()
 
     if turno == '2':
-        # pega todos da apuração e manda pra urna - TODO: filtrar só empatados
         cur.execute("SELECT * FROM sp_apurar_turma(%s)", (turma,))
         rows = cur.fetchall()
 
@@ -227,7 +226,23 @@ def configurar_urna(turma):
             conn.close()
             return jsonify({'error': 'Sem candidatos para 2 turno'}), 404
 
-        candidatos_ids = [r[0] for r in rows]
+        # agora filtra certo: só quem empatou por sexo
+        empatados_ids = []
+        for sexo_alvo in ('Masculino', 'Feminino'):
+            do_sexo = [r for r in rows if r[2] == sexo_alvo]
+            if not do_sexo:
+                continue
+            max_votos = max(r[3] for r in do_sexo)
+            candidatos_topo = [r for r in do_sexo if r[3] == max_votos]
+            if len(candidatos_topo) > 1:
+                empatados_ids.extend(r[0] for r in candidatos_topo)
+
+        if not empatados_ids:
+            cur.close()
+            conn.close()
+            return jsonify({'error': 'Não há candidatos empatados para 2 turno nesta turma.'}), 400
+
+        candidatos_ids = empatados_ids
         modo_voto = 'DISPUTA_DUPLA'
         votos_por_aluno = 2
     else:
