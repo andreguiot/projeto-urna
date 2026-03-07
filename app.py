@@ -226,16 +226,37 @@ def configurar_urna(turma):
             conn.close()
             return jsonify({'error': 'Sem candidatos para 2 turno'}), 404
 
-        # agora filtra certo: só quem empatou por sexo
+        # descobre o modo atual da turma
+        cur.execute("SELECT modo_voto FROM sp_configurar_urna(%s)", (turma,))
+        modo_row = cur.fetchone()
+        modo_voto = modo_row[0] if modo_row else 'DISPUTA_DUPLA'
+
         empatados_ids = []
-        for sexo_alvo in ('Masculino', 'Feminino'):
-            do_sexo = [r for r in rows if r[2] == sexo_alvo]
-            if not do_sexo:
-                continue
-            max_votos = max(r[3] for r in do_sexo)
-            candidatos_topo = [r for r in do_sexo if r[3] == max_votos]
-            if len(candidatos_topo) > 1:
-                empatados_ids.extend(r[0] for r in candidatos_topo)
+        sexos_presentes = set()
+
+        if modo_voto == 'DISPUTA_DUPLA':
+            for sexo_alvo in ('Masculino', 'Feminino'):
+                do_sexo = [r for r in rows if r[2] == sexo_alvo]
+                if not do_sexo: continue
+                max_votos = max(r[3] for r in do_sexo)
+                candidatos_topo = [r for r in do_sexo if r[3] == max_votos]
+                if len(candidatos_topo) > 1:
+                    empatados_ids.extend(r[0] for r in candidatos_topo)
+                    sexos_presentes.add(sexo_alvo)
+        else:
+            # UNICO_SEXO: 2 vagas, precisa checar quem disputa qual
+            if len(rows) >= 2:
+                votos_1 = rows[0][3]
+                cand_votos_1 = [r for r in rows if r[3] == votos_1]
+                if len(cand_votos_1) > 2:
+                    empatados_ids.extend(r[0] for r in cand_votos_1)
+                elif len(cand_votos_1) == 2:
+                    pass  # as 2 vagas já foram preenchidas, sem empate
+                else:
+                    votos_2 = rows[1][3]
+                    cand_votos_2 = [r for r in rows if r[3] == votos_2]
+                    if len(cand_votos_2) > 1:
+                        empatados_ids.extend(r[0] for r in cand_votos_2)
 
         if not empatados_ids:
             cur.close()
@@ -243,8 +264,12 @@ def configurar_urna(turma):
             return jsonify({'error': 'Não há candidatos empatados para 2 turno nesta turma.'}), 400
 
         candidatos_ids = empatados_ids
-        modo_voto = 'DISPUTA_DUPLA'
-        votos_por_aluno = 2
+        if len(sexos_presentes) > 1:
+            modo_voto = 'DISPUTA_DUPLA'
+            votos_por_aluno = 2
+        else:
+            modo_voto = 'UNICO_SEXO'
+            votos_por_aluno = 1
     else:
         cur.execute("SELECT * FROM sp_configurar_urna(%s)", (turma,))
         row = cur.fetchone()
