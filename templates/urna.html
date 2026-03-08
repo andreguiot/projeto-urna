@@ -9,6 +9,9 @@
 <div id="container-urna">
     <h1>🗳️ Urna Eletrônica</h1>
 
+    <audio id="som-confirma" src="{{ url_for('static', filename='sounds/confirmacao.mp3') }}" preload="auto"></audio>
+    <audio id="som-erro"     src="{{ url_for('static', filename='sounds/erro.mp3') }}"        preload="auto"></audio>
+
     <div id="area-turma">
         <label>Turma:</label>
         <input type="text" id="input-turma">
