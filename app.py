@@ -1,7 +1,8 @@
 import os
 import psycopg2
 import uuid
-from flask import Flask, render_template, request, jsonify
+from io import BytesIO
+from flask import Flask, render_template, request, jsonify, send_file
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
@@ -314,6 +315,77 @@ def configurar_urna(turma):
         'candidatos_votacao': dados_candidatos,
         'eleitos_automaticos': []
     })
+
+@app.route('/api/estatistica_pdf/<turma>', methods=['GET'])
+def estatistica_pdf(turma):
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        cur.execute("SELECT * FROM sp_apurar_turma(%s)", (turma,))
+        rows = cur.fetchall()
+        candidatos = []
+        for r in rows:
+            candidatos.append({
+                'id': r[0], 'nome': r[1], 'sexo': r[2],
+                'votos': r[3], 'classificacao': r[4]
+            })
+
+        cur.execute(
+            "SELECT tipo_voto, COUNT(*) FROM votos_turma WHERE turma = %s GROUP BY tipo_voto",
+            (turma,)
+        )
+        contagem = {'VALIDO': 0, 'BRANCO': 0, 'NULO': 0}
+        for tipo, qtd in cur.fetchall():
+            contagem[tipo] = qtd
+
+        cur.close()
+        conn.close()
+
+        from reportlab.lib.pagesizes import A4
+        from reportlab.pdfgen import canvas
+
+        buffer = BytesIO()
+        pdf = canvas.Canvas(buffer, pagesize=A4)
+        width, height = A4
+        y = height - 40
+
+        pdf.setFont("Helvetica-Bold", 16)
+        pdf.drawString(40, y, f"Relatorio de Apuracao - Turma {turma}")
+        y -= 24
+
+        pdf.setFont("Helvetica", 11)
+        pdf.drawString(40, y, f"Votos validos: {contagem['VALIDO']}")
+        y -= 16
+        pdf.drawString(40, y, f"Votos em branco: {contagem['BRANCO']}")
+        y -= 16
+        pdf.drawString(40, y, f"Votos nulos: {contagem['NULO']}")
+        y -= 24
+
+        pdf.setFont("Helvetica-Bold", 12)
+        pdf.drawString(40, y, "Candidatos:")
+        y -= 18
+        pdf.setFont("Helvetica", 11)
+        for cand in candidatos:
+            linha = f"{cand['nome']} ({cand['sexo']}): {cand['votos']} voto(s) - #{cand['classificacao']}"
+            pdf.drawString(50, y, linha)
+            y -= 14
+            if y < 80:
+                pdf.showPage()
+                y = height - 40
+
+        pdf.showPage()
+        pdf.save()
+        buffer.seek(0)
+
+        return send_file(
+            buffer,
+            mimetype='application/pdf',
+            as_attachment=True,
+            download_name=f"apuracao_{turma}.pdf"
+        )
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
