@@ -339,6 +339,13 @@ def estatistica_pdf(turma):
         for tipo, qtd in cur.fetchall():
             contagem[tipo] = qtd
 
+        # agora busca a lista individual de votos também
+        cur.execute(
+            "SELECT id, numero_chapa, tipo_voto, data_hora FROM votos_turma WHERE turma = %s ORDER BY id ASC",
+            (turma,)
+        )
+        votos = cur.fetchall()
+
         cur.close()
         conn.close()
 
@@ -351,7 +358,7 @@ def estatistica_pdf(turma):
         y = height - 40
 
         pdf.setFont("Helvetica-Bold", 16)
-        pdf.drawString(40, y, f"Relatorio de Apuracao - Turma {turma}")
+        pdf.drawString(40, y, f"Relatorio Estatistico - Turma {turma}")
         y -= 24
 
         pdf.setFont("Helvetica", 11)
@@ -363,16 +370,34 @@ def estatistica_pdf(turma):
         y -= 24
 
         pdf.setFont("Helvetica-Bold", 12)
-        pdf.drawString(40, y, "Candidatos:")
+        pdf.drawString(40, y, "Resumo por candidato:")
         y -= 18
         pdf.setFont("Helvetica", 11)
         for cand in candidatos:
-            linha = f"{cand['nome']} ({cand['sexo']}): {cand['votos']} voto(s) - #{cand['classificacao']}"
+            linha = f"Chapa ID {cand['id']} - {cand['nome']} ({cand['sexo']}): {cand['votos']} voto(s) - Classificacao {cand['classificacao']}"
             pdf.drawString(50, y, linha)
             y -= 14
             if y < 80:
                 pdf.showPage()
                 y = height - 40
+
+        if votos:
+            if y < 120:
+                pdf.showPage()
+                y = height - 40
+            pdf.setFont("Helvetica-Bold", 12)
+            pdf.drawString(40, y, "Lista completa de votos:")
+            y -= 18
+            pdf.setFont("Helvetica", 10)
+            for v in votos:
+                vid, numero_chapa, tipo_voto, data_hora = v
+                num_txt = f"Chapa {numero_chapa}" if numero_chapa is not None else "Sem numero"
+                linha = f"#{vid} - {num_txt} - {tipo_voto} - {data_hora.strftime('%d/%m/%Y %H:%M:%S')}"
+                pdf.drawString(50, y, linha)
+                y -= 12
+                if y < 60:
+                    pdf.showPage()
+                    y = height - 40
 
         pdf.showPage()
         pdf.save()
@@ -382,7 +407,7 @@ def estatistica_pdf(turma):
             buffer,
             mimetype='application/pdf',
             as_attachment=True,
-            download_name=f"apuracao_{turma}.pdf"
+            download_name=f"estatistica_{turma}.pdf"
         )
     except Exception as e:
         return jsonify({'error': str(e)}), 500
