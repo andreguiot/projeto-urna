@@ -346,6 +346,11 @@ def estatistica_pdf(turma):
         )
         votos = cur.fetchall()
 
+        # precisava pegar o modo_voto antes de fechar a conexão
+        cur.execute("SELECT modo_voto FROM sp_configurar_urna(%s)", (turma,))
+        modo_row = cur.fetchone()
+        modo_voto = modo_row[0] if modo_row else 'DISPUTA_DUPLA'
+
         cur.close()
         conn.close()
 
