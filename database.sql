@@ -1,6 +1,7 @@
 DROP TABLE IF EXISTS candidatos CASCADE;
+DROP TABLE IF EXISTS votos_turma CASCADE;
 
--- Adicionada coluna is_novo 
+-- Adicionada coluna is_novo
 CREATE TABLE candidatos (
     id SERIAL PRIMARY KEY,
     nome VARCHAR(100) NOT NULL,
