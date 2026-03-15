@@ -8,26 +8,43 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/urna.css') }}">
 </head>
 <body>
-<div id="container-urna">
-    <h1>🗳️ Urna Eletrônica</h1>
 
-    <audio id="som-confirma" src="{{ url_for('static', filename='sounds/confirmacao.mp3') }}" preload="auto"></audio>
-    <audio id="som-erro"     src="{{ url_for('static', filename='sounds/erro.mp3') }}"        preload="auto"></audio>
+    <!-- 
+        PASSO 1: O CONTAINER DA URNA
+        Ele mantém a proporção do seu design (1000x600).
+        A própria urna será usada para o mesário escolher a turma.
+    -->
+    <div class="urna-container">
+        
+        <!-- 
+            PASSO 2: A TELA (MONITOR)
+            Posicionada via porcentagem para nunca sair do lugar.
+        -->
+        <div id="tela" class="tela-area">
 
-    <div id="area-turma">
-        <label>Turma:</label>
-        <input type="text" id="input-turma">
-        <button onclick="carregarUrna()">Carregar</button>
-    </div>
+            <div id="interface-voto">
+                <div class="header-voto">Seu voto para:</div>
+                <div id="cargo-nome" class="cargo-txt">CARREGANDO...</div>
 
-    <div id="area-voto" style="display:none">
-        <p id="info-modo"></p>
-        <div id="lista-candidatos"></div>
+                <div id="display-numeros" class="numeros-grid">
+                    <!-- Gerado dinamicamente pelo script.js -->
+                </div>
 
-        <br>
-        <button onclick="votarBranco()">BRANCO</button>
-        <button onclick="votarNulo()">NULO</button>
-        <button onclick="confirmarVoto()">CONFIRMAR</button>
+                <div id="dados-candidato" class="info-txt">
+                    <!-- Nome e chapa aparecem aqui -->
+                </div>
+
+                <div id="instrucoes" class="rodape-txt">
+                    Aperte a tecla:<br>
+                    <span class="cor-verde">CONFIRMA</span> para confirmar<br>
+                    <span class="cor-laranja">CORRIGE</span> para reiniciar
+                </div>
+            </div>
+
+            <!-- Tela final de confirmação -->
+            <div id="interface-fim" class="tela-fim">VOTO CONFIRMADO</div>
+        </div>
+
     </div>
 
     <script src="{{ url_for('static', filename='js/urna.js') }}"></script>
