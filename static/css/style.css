@@ -135,6 +135,14 @@ input, select {
     object-fit: cover; 
 }
 
+/* Adicione isso ao seu arquivo urna.css */
+#interface-voto {
+    display: flex;
+    flex-direction: column; /* Força os elementos a ficarem um abaixo do outro */
+    height: 100%;
+    width: 100%;
+}
+
 .btn-salvar { 
     width: 100%; 
     padding: 1rem; 
