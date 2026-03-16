@@ -49,6 +49,33 @@
             <div id="interface-fim" class="tela-fim">VOTO CONFIRMADO</div>
         </div>
 
+        <!-- 
+            PASSO 3: O TECLADO SOBREPOSTO
+            Botões invisíveis que mapeiam o design da imagem.
+        -->
+        <div class="teclado-overlay">
+            <!-- Grade para os números 1 a 9 e 0 -->
+            <div class="grade-num">
+                <button class="tecla-invisivel" onclick="clicou(1)">1</button>
+                <button class="tecla-invisivel" onclick="clicou(2)">2</button>
+                <button class="tecla-invisivel" onclick="clicou(3)">3</button>
+                <button class="tecla-invisivel" onclick="clicou(4)">4</button>
+                <button class="tecla-invisivel" onclick="clicou(5)">5</button>
+                <button class="tecla-invisivel" onclick="clicou(6)">6</button>
+                <button class="tecla-invisivel" onclick="clicou(7)">7</button>
+                <button class="tecla-invisivel" onclick="clicou(8)">8</button>
+                <button class="tecla-invisivel" onclick="clicou(9)">9</button>
+                <button class="tecla-invisivel btn-zero" onclick="clicou(0)">0</button>
+            </div>
+            
+            <!-- Botões de ação inferiores -->
+            <div class="grade-acoes">
+                <button class="btn-acao btn-branco" onclick="branco()">BRANCO</button>
+                <button class="btn-acao btn-corrige" onclick="corrigir()">CORRIGE</button>
+                <button class="btn-acao btn-confirma" onclick="confirmar()">CONFIRMA</button>
+            </div>
+        </div>
+
     </div>
 
     <script src="{{ url_for('static', filename='js/urna.js') }}"></script>
