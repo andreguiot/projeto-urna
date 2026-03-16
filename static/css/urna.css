@@ -1,60 +1,390 @@
-/* estilos da urna - feito correndo */
+/* GUIA DE AJUSTE MANUAL (Calibração)
+   Altere os valores abaixo para reposicionar os elementos na tela.
+   Use % para manter a proporção em diferentes tamanhos de monitor.
+*/
+
+:root {
+    --tela-topo: 13%;
+    --tela-esq: 4.8%;
+    --tela-largura: 54.4%;
+    --tela-altura: 70%;
+    --teclado-topo: 27.5%;
+    --teclado-dir: 6%;
+    --teclado-largura: 25.5%;
+    --ajuste-foto-topo: 21%;
+    --ajuste-nome-topo: 156px;
+    --ajuste-rodape-topo: 6px;
+    --ajuste-conteudo-voto: 2.5%;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, Helvetica, sans-serif;
+}
 
 body {
-    font-family: Arial, sans-serif;
-    background: #1a1a2e;
-    color: #eee;
+    margin: 0;
+    height: 100vh;
+    background-color: #2c3e50;
     display: flex;
     justify-content: center;
-    padding: 30px;
-}
-
-#container-urna {
-    background: #16213e;
-    border: 2px solid #0f3460;
-    border-radius: 10px;
-    padding: 30px;
-    width: 500px;
-    text-align: center;
-}
-
-h1 {
-    color: #e94560;
-    margin-bottom: 20px;
-}
-
-input[type="text"] {
-    padding: 8px;
-    border-radius: 5px;
-    border: 1px solid #0f3460;
-    background: #0f3460;
-    color: #eee;
-    width: 200px;
-}
-
-button {
-    padding: 10px 20px;
-    margin: 5px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-weight: bold;
-}
-
-#btn-branco { background: #fff; color: #000; }
-#btn-nulo   { background: #e94560; color: #fff; }
-#btn-confirmar { background: #0f3460; color: #fff; }
-
-.card-candidato {
-    background: #0f3460;
-    border-radius: 8px;
-    padding: 10px;
-    margin: 8px 0;
-    display: flex;
-    justify-content: space-between;
     align-items: center;
 }
 
-.card-candidato.selecionado {
-    border: 2px solid #e94560;
+.urna-container {
+    aspect-ratio: 425.25 / 254.999984;
+    width: 97vw;
+    max-height: 98vh;
+    background-image: url('../images/design-urna-trimmed.svg');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    position: relative;
+}
+
+/* --- ÁREA DO MONITOR (TELA BRANCA) --- */
+.tela-area {
+    position: absolute;
+    top: var(--tela-topo);
+    left: var(--tela-esq);
+    width: var(--tela-largura);
+    height: var(--tela-altura);
+    background-color: white;
+    padding: var(--ajuste-conteudo-voto);
+    display: flex;
+    flex-direction: column;
+}
+
+/* Controle de turno (1º / 2º) */
+.controle-turno {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    margin-bottom: 6px;
+}
+
+.btn-turno {
+    padding: 4px 10px;
+    font-size: 0.9vw;
+    border-radius: 12px;
+    border: 1px solid #999;
+    background-color: #f0f0f0;
+    cursor: pointer;
+}
+
+.btn-turno.ativo {
+    background-color: #34495e;
+    color: #fff;
+    border-color: #2c3e50;
+}
+
+/* Garante que os elementos de voto fiquem empilhados corretamente */
+#interface-voto {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+}
+
+/* --- TEXTOS SUPERIORES --- */
+.header-voto {
+    font-size: 1.4vw;
+    text-transform: uppercase;
+}
+
+.cargo-txt {
+    font-size: 2.8vw;
+    font-weight: bold;
+    margin: 2% 0;
+    text-align: center;
+}
+
+/* --- BLOCO DOS NÚMEROS --- */
+.numeros-grid {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.caixa-num {
+    width: 4.2vw;
+    height: 5.8vw;
+    border: 2px solid #000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 3.8vw;
+    font-weight: bold;
+}
+
+.pisca {
+    animation: piscar 0.8s infinite;
+}
+
+@keyframes piscar {
+    50% {
+        opacity: 0;
+    }
+}
+
+/* --- FOTO DO CANDIDATO --- */
+.foto-candidato {
+    position: absolute;
+    top: var(--ajuste-foto-topo);
+    /* Ajustado pela variável no topo */
+    right: 4%;
+    width: 26%;
+    height: 42%;
+    border: 1px solid #000;
+    display: none;
+    background-color: #eee;
+}
+
+.foto-candidato img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* --- INFORMAÇÕES DO CANDIDATO (NOME/SEXO) --- */
+.info-txt {
+    font-size: 1.8vw;
+    line-height: 1.4;
+    margin-top: auto;
+    /* Esse elemento escorrega até bater no rodapé */
+    margin-bottom: 3%;
+    /* Dá um leve respiro da linha do rodapé */
+    max-width: 66%;
+    /* Garante que o texto não bata na foto */
+    word-wrap: break-word;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+}
+
+/* Textos específicos dentro da área de informações */
+.info-turma {
+    margin-top: 4%;
+    font-size: 1.6vw;
+}
+
+.info-candidato {
+    font-size: 1.8vw;
+}
+
+.info-destaque {
+    font-size: 2.6vw;
+    font-weight: bold;
+}
+
+.info-status {
+    margin-top: 4%;
+    font-size: 1.5vw;
+}
+
+.info-erro {
+    margin-top: 4%;
+    font-size: 1.5vw;
+    color: red;
+}
+
+/* Mensagens de aviso/erro durante a votação */
+.mensagem-aviso {
+    margin-top: 4%;
+    font-size: 1.6vw;
+    max-width: 90%;
+}
+
+.mensagem-aviso .titulo-aviso {
+    color: red;
+    font-weight: bold;
+    display: block;
+    margin-bottom: 6px;
+}
+
+/* --- RODAPÉ (BARRA + INSTRUÇÕES) --- */
+.rodape-txt {
+    border-top: 2px solid #000;
+    padding-top: 8px;
+    font-size: 1.1vw;
+    margin-top: auto;
+    /* Empurra o rodapé e a linha sempre para o fundo da tela */
+    min-height: 4vw;
+    /* Garante que o rodapé tem sempre a mesma altura, não dependendo do conteúdo visível/invisível */
+    position: relative;
+    z-index: 10;
+    background-color: white;
+    /* Garante que sobreponha eventuais vazamentos por trás */
+}
+
+.cor-verde {
+    color: #2d6a4f;
+    font-weight: bold;
+}
+
+.cor-laranja {
+    color: #d68c45;
+    font-weight: bold;
+}
+
+/* --- TECLADO INVISÍVEL --- */
+.teclado-overlay {
+    position: absolute;
+    top: var(--teclado-topo);
+    right: var(--teclado-dir);
+    width: var(--teclado-largura);
+    height: 60%;
+    display: flex;
+    flex-direction: column;
+}
+
+.grade-num {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    height: 72%;
+}
+
+.tecla-invisivel {
+    background: #111;
+    border: 2px solid #000;
+    border-radius: 6px;
+    cursor: pointer;
+    color: #fff;
+    font-size: 1.6vw;
+    font-weight: bold;
+    box-shadow: 0 2px 0 #000;
+    transition: transform 0.1s ease, box-shadow 0.1s ease, background-color 0.1s ease;
+}
+
+.tecla-invisivel:hover {
+    background-color: #222;
+}
+
+.tecla-invisivel:active {
+    transform: translateY(1px);
+    box-shadow: 0 1px 0 #000;
+}
+
+.btn-zero {
+    grid-column: 2;
+}
+
+.grade-acoes {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 15px;
+    height: 18%;
+}
+
+.btn-acao {
+    flex: 1;
+    border: 2px solid #000;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1vw;
+    font-weight: bold;
+    box-shadow: 0 2px 0 #000;
+    transition: transform 0.1s ease, box-shadow 0.1s ease, filter 0.1s ease;
+}
+
+.btn-acao:active {
+    transform: translateY(1px);
+    box-shadow: 0 1px 0 #000;
+}
+
+.btn-branco {
+    background: #ffffff;
+    color: #000;
+}
+
+.btn-corrige {
+    background: #f39c12;
+    color: #000;
+}
+
+.btn-confirma {
+    background: #27ae60;
+    color: #fff;
+}
+
+.btn-acao:hover {
+    filter: brightness(1.05);
+}
+
+.tela-fim {
+    display: none;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    font-size: 4vw;
+    font-weight: bold;
+    letter-spacing: 3px;
+    text-align: center;
+    padding: 0 5%;
+}
+
+/* --- BOTÃO POWER E JANELAS --- */
+.btn-power-oculto {
+    position: absolute;
+    top: 6%;
+    right: 2.5%;
+    width: 4%;
+    height: 7%;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-power-oculto img {
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    transition: transform 0.15s ease, filter 0.15s ease;
+}
+
+.btn-power-oculto:hover img {
+    transform: scale(1.05);
+    filter: brightness(1.2);
+}
+
+.janela-power-oculta {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+}
+
+.janela-power-oculta.ativa {
+    display: flex;
+}
+
+.janela-power-conteudo {
+    background: #ffffff;
+    padding: 1.5rem 2rem;
+    border-radius: 10px;
+    text-align: center;
+    max-width: 320px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.janela-power-botoes {
+    display: flex;
+    justify-content: center;
+    gap: 0.75rem;
+    margin-top: 15px;
+}
+
+.janela-power-botoes button {
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
 }
