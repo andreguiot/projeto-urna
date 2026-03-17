@@ -76,6 +76,21 @@
             </div>
         </div>
 
+        <!-- Botão POWER (sobreposto) -->
+        <button id="btn-power" class="btn-power-oculto">
+            <img src="{{ url_for('static', filename='images/power (1).png') }}" alt="Power">
+        </button>
+    </div>
+
+    <!-- Janela para retornar à seleção de turmas -->
+    <div id="janela-power" class="janela-power-oculta">
+        <div class="janela-power-conteudo">
+            <p>Deseja voltar para a seleção de turmas?</p>
+            <div class="janela-power-botoes">
+                <button id="btn-power-cancelar" type="button">Cancelar</button>
+                <button id="btn-power-confirmar" type="button">Sim, voltar</button>
+            </div>
+        </div>
     </div>
 
     <script src="{{ url_for('static', filename='js/urna.js') }}"></script>
