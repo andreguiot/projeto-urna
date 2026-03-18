@@ -110,3 +110,99 @@ async function sincronizarVotos() {
 window.addEventListener('online', () => {
     sincronizarVotos();
 });
+
+// Controle do botão POWER (mesário)
+let ultimoCliquePower = 0;
+
+function mostrarJanelaPower() {
+    const janela = document.getElementById('janela-power');
+    if (janela) {
+        janela.classList.add('ativa');
+    }
+}
+
+function esconderJanelaPower() {
+    const janela = document.getElementById('janela-power');
+    if (janela) {
+        janela.classList.remove('ativa');
+    }
+}
+
+function inicializarPower() {
+    const btnPower = document.getElementById('btn-power');
+    const btnCancelar = document.getElementById('btn-power-cancelar');
+    const btnConfirmar = document.getElementById('btn-power-confirmar');
+
+    if (btnPower) {
+        btnPower.addEventListener('click', () => {
+            // Só funciona quando já estiver na fase de votação
+            if (faseUrna !== 'votacao') return;
+
+            const agora = Date.now();
+            if (agora - ultimoCliquePower < 600) {
+                // Dois cliques em menos de 600ms
+                mostrarJanelaPower();
+            }
+            ultimoCliquePower = agora;
+        });
+    }
+
+    if (btnCancelar) {
+        btnCancelar.addEventListener('click', esconderJanelaPower);
+    }
+
+    if (btnConfirmar) {
+        btnConfirmar.addEventListener('click', () => {
+            esconderJanelaPower();
+            // Volta para a seleção de turma, limpando a configuração atual
+            configUrna = null;
+            prepararSelecaoTurma();
+        });
+    }
+}
+
+function inicializarControleTurno() {
+    const btn1 = document.getElementById('btn-turno-1');
+    const btn2 = document.getElementById('btn-turno-2');
+    const barraTurno = document.getElementById('controle-turno');
+
+    if (!btn1 || !btn2 || !barraTurno) return;
+
+    const atualizarVisibilidade = () => {
+        // Só mostra os botões quando estamos na tela de Seleção de Turma
+        barraTurno.style.display = (faseUrna === 'turma') ? 'flex' : 'none';
+    };
+
+    const atualizarVisual = () => {
+        btn1.classList.toggle('ativo', turnoAtual === 1);
+        btn2.classList.toggle('ativo', turnoAtual === 2);
+        atualizarVisibilidade();
+    };
+
+    btn1.addEventListener('click', () => {
+        if (faseUrna !== 'turma') return;
+        turnoAtual = 1;
+        atualizarVisual();
+    });
+
+    btn2.addEventListener('click', () => {
+        if (faseUrna !== 'turma') return;
+        turnoAtual = 2;
+        atualizarVisual();
+    });
+
+    atualizarVisual();
+}
+
+// Sistema de Áudio
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+function bip(tipo = 'curto') {
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.frequency.value = tipo === 'longo' ? 400 : 880;
+    osc.connect(gain); 
+    gain.connect(audioCtx.destination);
+    osc.start();
+    setTimeout(() => osc.stop(), tipo === 'longo' ? 800 : 100);
+}
