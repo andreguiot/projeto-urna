@@ -219,3 +219,38 @@ function tocarSomConfirmacao() {
         // Se o navegador bloquear o áudio, só ignora
     }
 }
+
+/**
+ * INICIALIZAÇÃO
+ * Define quantas vagas existem com base no modo de voto vindo do Banco.
+ */
+function prepararUrna() {
+    if (!configUrna) return;
+
+    const modo = configUrna.modo_voto;
+
+    // Regras de negócio da coordenação:
+    // - DISPUTA_DUPLA: sempre 2 votos (um menino e uma menina)
+    // - UNICO_SEXO: o banco já manda se é 1 ou 2 votos por aluno
+    if (modo === "DISPUTA_DUPLA") {
+        totalVotosNecessarios = 2;
+    } else if (modo === "UNICO_SEXO") {
+        totalVotosNecessarios = configUrna.votos_por_aluno || 2;
+    } else {
+        // Aqui teoricamente não cai, porque quando não tem candidatos
+        // o backend nem deixa a urna abrir.
+        totalVotosNecessarios = 0;
+    }
+
+    if (totalVotosNecessarios === 0) {
+        exibirFimImediato();
+    } else {
+        reiniciarCicloVoto();
+    }
+
+    // Entramos na fase de votação, portanto a barra de turno deve sumir
+    const barraTurno = document.getElementById('controle-turno');
+    if (barraTurno) {
+        barraTurno.style.display = 'none';
+    }
+}
