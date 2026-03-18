@@ -206,3 +206,16 @@ function bip(tipo = 'curto') {
     osc.start();
     setTimeout(() => osc.stop(), tipo === 'longo' ? 800 : 100);
 }
+
+// Som real de confirmação (arquivo MP3 em static/sounds/confirma.mp3)
+const somConfirmacao = new Audio('/static/sounds/confirma.mp3');
+somConfirmacao.volume = 0.9;
+
+function tocarSomConfirmacao() {
+    try {
+        somConfirmacao.currentTime = 0;
+        somConfirmacao.play();
+    } catch (e) {
+        // Se o navegador bloquear o áudio, só ignora
+    }
+}
