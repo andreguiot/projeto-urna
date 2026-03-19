@@ -323,3 +323,69 @@ function clicou(n) {
         }
     }
 }
+
+/**
+ * BUSCA INDEPENDENTE DE SEXO
+ */
+function buscarCandidato() {
+    const modo = configUrna.modo_voto;
+    const candidato = configUrna.candidatos.find(c => c.numero === numeroDigitado);
+    
+    document.getElementById('instrucoes').style.display = "block";
+
+    if (!candidato) {
+        document.getElementById('dados-candidato').innerHTML = `
+            <div class="info-destaque">
+                NÚMERO ERRADO / VOTO NULO
+            </div>
+        `;
+        return;
+    }
+
+    // Validação de Regra: Se for Disputa Dupla, não pode votar no mesmo sexo duas vezes
+    if (modo === "DISPUTA_DUPLA" && generosJaVotados.includes(candidato.sexo)) {
+        document.getElementById('dados-candidato').innerHTML = `
+            <div class="mensagem-aviso">
+                <span class="titulo-aviso">Atenção:</span>
+                Você já votou em um representante ${candidato.sexo}.<br>
+                <b>ESCOLHA O OUTRO SEXO OU CORRIGE.</b>
+            </div>
+        `;
+        return;
+    }
+
+    // Validação de Regra: Não pode votar no mesmo ID duas vezes (Único Sexo)
+    if (idsJaVotados.includes(candidato.id)) {
+        document.getElementById('dados-candidato').innerHTML = `
+            <div class="mensagem-aviso">
+                <span class="titulo-aviso">Atenção:</span>
+                Você já votou neste candidato.<br>
+                <b>ESCOLHA OUTRO OU CORRIGE.</b>
+            </div>
+        `;
+        return;
+    }
+
+    // Se passou nas validações, exibe
+    document.getElementById('dados-candidato').innerHTML = `
+        <div class="info-candidato">
+            Nome: <b>${candidato.nome}</b><br>
+            Sexo: ${candidato.sexo}
+        </div>
+    `;
+    // Ajusta o caminho da foto para apontar para /static/uploads
+    let fotoSrc = '';
+    if (candidato.foto) {
+        if (candidato.foto.startsWith('http')) {
+            fotoSrc = candidato.foto;
+        } else if (candidato.foto.startsWith('/static/')) {
+            fotoSrc = candidato.foto;
+        } else {
+            fotoSrc = '/static/' + candidato.foto.replace(/^\/+/, '');
+        }
+    } else {
+        fotoSrc = '/static/images/default-user.png';
+    }
+    document.getElementById('img-candidato').src = fotoSrc;
+    document.getElementById('foto-moldura').style.display = "block";
+}
