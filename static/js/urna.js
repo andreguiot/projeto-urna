@@ -254,3 +254,25 @@ function prepararUrna() {
         barraTurno.style.display = 'none';
     }
 }
+
+/**
+ * PREPARA A TELA PARA O PRÓXIMO VOTO
+ */
+function reiniciarCicloVoto() {
+    numeroDigitado = "";
+    ehBranco = false;
+
+    // Título neutro: não define ordem de sexo nem "1º/2º" voto.
+    // A regra de "um menino e uma menina" (no caso de DISPUTA_DUPLA)
+    // é garantida apenas pela validação em buscarCandidato/confirmar.
+    const titulo = "Representante";
+
+    document.getElementById('cargo-nome').innerText = titulo;
+    document.getElementById('dados-candidato').innerHTML = "";
+    document.getElementById('foto-moldura').style.display = "none";
+    document.getElementById('instrucoes').style.display = "none";
+
+    // Sempre 2 dígitos para chapa
+    let htmlCaixas = `<div class="caixa-num pisca" id="dig-0"></div><div class="caixa-num" id="dig-1"></div>`;
+    document.getElementById('display-numeros').innerHTML = htmlCaixas;
+}
