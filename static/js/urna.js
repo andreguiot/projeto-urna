@@ -276,3 +276,50 @@ function reiniciarCicloVoto() {
     let htmlCaixas = `<div class="caixa-num pisca" id="dig-0"></div><div class="caixa-num" id="dig-1"></div>`;
     document.getElementById('display-numeros').innerHTML = htmlCaixas;
 }
+
+/**
+ * TECLADO
+ */
+function clicou(n) {
+    // Seleção de turma (3 dígitos) usa o mesmo teclado
+    if (faseUrna === 'turma') {
+        if (numeroDigitado.length < 3) {
+            bip();
+            const caixa = document.getElementById(`dig-${numeroDigitado.length}`);
+            if (caixa) {
+                caixa.innerText = n;
+                caixa.classList.remove('pisca');
+            }
+            numeroDigitado += n;
+
+            const prox = document.getElementById(`dig-${numeroDigitado.length}`);
+            if (prox) prox.classList.add('pisca');
+
+            if (numeroDigitado.length === 3) {
+                document.getElementById('instrucoes').style.display = "block";
+                document.getElementById('dados-candidato').innerHTML = `
+                    <div class="info-turma">
+                        Turma selecionada: <b>${numeroDigitado}M</b><br>
+                        Aperte <b>CONFIRMA</b> para carregar ou <b>CORRIGE</b> para alterar.
+                    </div>
+                `;
+            }
+        }
+        return;
+    }
+
+    if (numeroDigitado.length < 2 && !ehBranco) {
+        bip();
+        const caixa = document.getElementById(`dig-${numeroDigitado.length}`);
+        caixa.innerText = n;
+        caixa.classList.remove('pisca');
+        numeroDigitado += n;
+
+        const prox = document.getElementById(`dig-${numeroDigitado.length}`);
+        if (prox) prox.classList.add('pisca');
+
+        if (numeroDigitado.length === 2) {
+            buscarCandidato();
+        }
+    }
+}
