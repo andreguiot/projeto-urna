@@ -413,3 +413,80 @@ function corrigir() {
         reiniciarCicloVoto();
     }
 }
+
+async function confirmar() {
+    // Primeiro fluxo: seleção de turma
+    if (faseUrna === 'turma') {
+        if (numeroDigitado.length !== 3) return;
+
+        const base = numeroDigitado;
+        const turmasParaTentar = [`${base}M`, `${base}T`];
+        let dados = null;
+        const turno = turnoAtual || 1;
+
+        document.getElementById('dados-candidato').innerHTML = `
+            <div class="info-status">
+                Carregando urna da turma...
+            </div>
+        `;
+        document.getElementById('instrucoes').style.display = "none";
+
+        let mensagemErro = null;
+
+        for (const turma of turmasParaTentar) {
+            try {
+                const resp = await fetch(`/api/urna/${turma}?turno=${turno}`);
+                if (resp.ok) {
+                    dados = await resp.json();
+                    break;
+                } else {
+                    const body = await resp.json().catch(() => ({}));
+                    mensagemErro = body.error || mensagemErro;
+                }
+            } catch (e) {
+                // ignora e tenta a próxima combinação
+            }
+        }
+
+        if (!dados) {
+            // Mensagem mais clara para 2º turno sem empatados
+            if (turno === 2 && mensagemErro) {
+                document.getElementById('dados-candidato').innerHTML = `
+                    <div class="info-erro">
+                        ${mensagemErro}<br>
+                        <span style="color:black">
+                            Use <b>CORRIGE</b> para alterar a turma ou volte para o 1º turno.
+                        </span>
+                    </div>
+                `;
+            } else {
+                document.getElementById('dados-candidato').innerHTML = `
+                    <div class="info-erro">
+                        Turma não encontrada ou sem candidatos.<br>
+                        <span style="color:black">
+                            Use <b>CORRIGE</b> para tentar outra turma.
+                        </span>
+                    </div>
+                `;
+            }
+            return;
+        }
+
+        // TODO: verificar votos existentes e oferecer PDF (próximo commit)
+        const turmaCarregada = dados.turma;
+
+        configUrna = {
+            turma: turmaCarregada,
+            modo_voto: dados.modo_voto,
+            votos_por_aluno: dados.votos_por_aluno,
+            candidatos: dados.candidatos_votacao || []
+        };
+
+        ultimaTurmaCarregada = turmaCarregada;
+
+        salvarFila([]);
+        faseUrna = 'votacao';
+        prepararUrna();
+        return;
+    }
+}
