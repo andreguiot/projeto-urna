@@ -389,3 +389,27 @@ function buscarCandidato() {
     document.getElementById('img-candidato').src = fotoSrc;
     document.getElementById('foto-moldura').style.display = "block";
 }
+
+function branco() {
+    if (faseUrna === 'turma') return;
+    if (numeroDigitado === "") {
+        bip();
+        ehBranco = true;
+        document.getElementById('display-numeros').innerHTML = "";
+        document.getElementById('dados-candidato').innerHTML = `
+            <div class="info-destaque">
+                VOTO EM BRANCO
+            </div>
+        `;
+        document.getElementById('instrucoes').style.display = "block";
+    }
+}
+
+function corrigir() {
+    bip();
+    if (faseUrna === 'turma') {
+        prepararSelecaoTurma();
+    } else {
+        reiniciarCicloVoto();
+    }
+}
