@@ -475,6 +475,32 @@ async function confirmar() {
         // TODO: verificar votos existentes e oferecer PDF (próximo commit)
         const turmaCarregada = dados.turma;
 
+        // Se já estivermos retornando para a mesma turma e houver votos,
+        // oferecemos a opção de gerar o PDF estatístico antes de seguir.
+        try {
+            const respApuracao = await fetch(`/api/apuracao/${turmaCarregada}`);
+            if (respApuracao.ok) {
+                const estat = await respApuracao.json();
+                const totalVotos = (estat.votos_validos || 0) +
+                    (estat.votos_brancos || 0) +
+                    (estat.votos_nulos || 0);
+
+                if (totalVotos > 0 && ultimaTurmaCarregada === turmaCarregada) {
+                    const desejaPdf = window.confirm(
+                        `Já existem votos registrados para a turma ${turmaCarregada}.\n\n` +
+                        `Deseja gerar o PDF estatístico desta turma agora?\n\n` +
+                        `OK = Gerar PDF e continuar votação\n` +
+                        `Cancelar = Apenas continuar votação`
+                    );
+                    if (desejaPdf) {
+                        window.open(`/api/estatistica_pdf/${turmaCarregada}`, '_blank');
+                    }
+                }
+            }
+        } catch (e) {
+            // Se der erro ao consultar apuração, apenas segue fluxo normal
+        }
+
         configUrna = {
             turma: turmaCarregada,
             modo_voto: dados.modo_voto,
