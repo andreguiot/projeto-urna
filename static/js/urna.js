@@ -515,4 +515,54 @@ async function confirmar() {
         prepararUrna();
         return;
     }
+
+    if (!configUrna) return;
+
+    const modo = configUrna.modo_voto;
+    const candidato = configUrna.candidatos.find(c => c.numero === numeroDigitado);
+
+    // Validação final antes de confirmar
+    if (numeroDigitado.length === 2 || ehBranco) {
+        // Define o tipo de voto
+        let tipoVoto = 'NULO';
+        let numeroChapa = null;
+
+        if (ehBranco) {
+            tipoVoto = 'BRANCO';
+        } else if (candidato) {
+            tipoVoto = 'VALIDO';
+            numeroChapa = parseInt(candidato.numero, 10);
+        }
+
+        if (!ehBranco && candidato) {
+            // Impede confirmar se violar a regra de sexo/duplicidade
+            if (modo === "DISPUTA_DUPLA" && generosJaVotados.includes(candidato.sexo)) return;
+            if (idsJaVotados.includes(candidato.id)) return;
+
+            // Registra dados do candidato escolhido
+            generosJaVotados.push(candidato.sexo);
+            idsJaVotados.push(candidato.id);
+        }
+
+        // Monta o objeto de voto para enviar / enfileirar
+        const voto = {
+            numero: numeroChapa,
+            tipo: tipoVoto,
+            data: new Date().toISOString()
+        };
+
+        // Tenta registrar imediatamente; se der erro ou estiver offline, ele guarda na fila
+        registrarVoto(voto);
+
+        votosRealizados.push(ehBranco ? "BRANCO" : numeroDigitado);
+
+        if (votosRealizados.length < totalVotosNecessarios) {
+            reiniciarCicloVoto();
+        } else {
+            finalizar();
+        }
+
+        // Sempre tenta sincronizar a fila (caso tenha votos antigos)
+        sincronizarVotos();
+    }
 }
