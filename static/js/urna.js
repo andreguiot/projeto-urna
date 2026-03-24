@@ -566,3 +566,69 @@ async function confirmar() {
         sincronizarVotos();
     }
 }
+
+function finalizar() {
+    // Som oficial de confirmação + bip longo juntos com o "VOTO CONFIRMADO"
+    tocarSomConfirmacao();
+    bip('longo');
+    
+    // Esconde a interface de voto e mostra o FIM
+    document.getElementById('interface-voto').style.display = "none";
+    document.getElementById('interface-fim').style.display = "flex";
+    
+    // Aguarda 4 segundos antes de liberar para o próximo eleitor
+    setTimeout(() => {
+        // Limpa os estados de controle do eleitor anterior
+        votosRealizados = [];
+        generosJaVotados = [];
+        idsJaVotados = [];
+        
+        // Volta para a interface de voto
+        // Removemos o inline style para que ele puxe a config 'flex' diretamente do urna.css
+        document.getElementById('interface-voto').style.display = "";
+        document.getElementById('interface-fim').style.display = "none";
+        
+        // Prepara a tela (títulos, caixas de números vazias, etc)
+        prepararUrna();
+    }, 4000);
+}
+
+// Prepara a tela para a seleção de turma usando a própria urna
+function prepararSelecaoTurma() {
+    faseUrna = 'turma';
+    numeroDigitado = "";
+    ehBranco = false;
+    votosRealizados = [];
+    generosJaVotados = [];
+    idsJaVotados = [];
+
+    document.getElementById('cargo-nome').innerText = "Seleção de Turma";
+    document.getElementById('header-voto')?.innerText;
+    document.getElementById('dados-candidato').innerHTML = `
+        <div class="info-turma">
+            Digite os 3 dígitos da turma e aperte <b>CONFIRMA</b>.
+        </div>
+    `;
+    document.getElementById('foto-moldura').style.display = "none";
+    document.getElementById('instrucoes').style.display = "none";
+
+    // 3 caixas para turma
+    let htmlCaixas = `
+        <div class="caixa-num pisca" id="dig-0"></div>
+        <div class="caixa-num" id="dig-1"></div>
+        <div class="caixa-num" id="dig-2"></div>
+    `;
+    document.getElementById('display-numeros').innerHTML = htmlCaixas;
+    
+    // Ao voltar para seleção de turma, exibe novamente o controle de turno
+    const barraTurno = document.getElementById('controle-turno');
+    if (barraTurno) {
+        barraTurno.style.display = 'flex';
+    }
+};
+
+window.onload = () => {
+    prepararSelecaoTurma();
+    inicializarPower();
+    inicializarControleTurno();
+};
