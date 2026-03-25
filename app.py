@@ -31,6 +31,7 @@ def index():
 
 @app.route('/urna')
 def urna():
+    # Página única da urna; a seleção de turma acontece na própria tela
     return render_template('urna.html')
 
 @app.route('/api/candidatos', methods=['POST'])
@@ -131,6 +132,9 @@ def deletar_candidato(id):
 
 @app.route('/api/votos', methods=['POST'])
 def registrar_votos():
+    """
+    Recebe um lote de votos da urna.
+    """
     data = request.get_json()
     if not data:
         return jsonify({'error': 'JSON inválido'}), 400
@@ -170,6 +174,11 @@ def registrar_votos():
 
 @app.route('/api/apuracao/<turma>', methods=['GET'])
 def apurar_turma(turma):
+    """
+    Devolve, para uma turma:
+    - lista de candidatos com votos e classificação
+    - quantidade de votos em branco e nulos
+    """
     conn = get_db_connection()
     cur = conn.cursor()
 
@@ -318,6 +327,12 @@ def configurar_urna(turma):
 
 @app.route('/api/estatistica_pdf/<turma>', methods=['GET'])
 def estatistica_pdf(turma):
+    """
+    Gera um PDF estatístico da turma com:
+    - candidatos, votos e classificação
+    - totais de votos válidos, brancos e nulos
+    - lista de todos os votos registrados
+    """
     try:
         conn = get_db_connection()
         cur = conn.cursor()
