@@ -142,7 +142,6 @@ def registrar_votos():
     turma = data.get('turma')
     votos = data.get('votos', [])
 
-    # tava quebrando quando vinha sem turma
     if not turma or not isinstance(votos, list):
         return jsonify({'error': 'Dados incompletos'}), 400
 
@@ -152,15 +151,17 @@ def registrar_votos():
     for voto in votos:
         numero = voto.get('numero')
         tipo = voto.get('tipo')
+        # Garante um tipo de voto conhecido
         if tipo not in ('VALIDO', 'BRANCO', 'NULO'):
             tipo = 'NULO'
 
+        # Registra o voto na tabela de votos da turma
         cur.execute(
             "INSERT INTO votos_turma (turma, numero_chapa, tipo_voto) VALUES (%s, %s, %s)",
             (turma, numero, tipo)
         )
 
-        # precisava incrementar o contador aqui, esqueci antes
+        # Só conta voto válido que tem número de chapa
         if tipo == 'VALIDO' and numero is not None:
             cur.execute(
                 "UPDATE candidatos SET votos = votos + 1 WHERE turma = %s AND numero_chapa = %s",
@@ -195,7 +196,7 @@ def apurar_turma(turma):
             'classificacao': r[4]
         })
 
-    # esqueci de contar brancos e nulos antes
+    # Contagem de brancos e nulos
     cur.execute(
         """
         SELECT tipo_voto, COUNT(*)
