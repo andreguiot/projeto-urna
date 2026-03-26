@@ -320,6 +320,8 @@ def configurar_urna(turma):
             return jsonify({'error': 'Turma sem candidatos cadastrados'}), 404
 
     dados_candidatos = []
+    dados_eleitos = []
+
     if candidatos_ids:
         cur.execute("""
             SELECT id, nome, numero_chapa, caminho_foto, sexo
@@ -331,11 +333,27 @@ def configurar_urna(turma):
             dados_candidatos.append({
                 'id': c[0],
                 'nome': c[1],
-                'numero': c[2],
+                # Sempre envia o número da chapa com 2 dígitos (01, 02, 10...)
+                'numero': f"{c[2]:02d}" if isinstance(c[2], int) else str(c[2]),
                 'foto': c[3],
                 'sexo': c[4]
             })
 
+    if eleitos_ids:
+        cur.execute("""
+            SELECT id, nome, numero_chapa, caminho_foto, sexo
+            FROM candidatos
+            WHERE id = ANY(%s)
+            ORDER BY numero_chapa ASC
+        """, (eleitos_ids,))
+        for c in cur.fetchall():
+            dados_eleitos.append({
+                'id': c[0],
+                'nome': c[1],
+                'numero': f"{c[2]:02d}" if isinstance(c[2], int) else str(c[2]),
+                'foto': c[3],
+                'sexo': c[4]
+            })
     cur.close()
     conn.close()
 
@@ -344,7 +362,7 @@ def configurar_urna(turma):
         'modo_voto': modo_voto,
         'votos_por_aluno': votos_por_aluno,
         'candidatos_votacao': dados_candidatos,
-        'eleitos_automaticos': []
+        'eleitos_automaticos': dados_eleitos
     })
 
 @app.route('/api/estatistica_pdf/<turma>', methods=['GET'])
