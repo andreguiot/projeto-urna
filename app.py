@@ -377,70 +377,141 @@ def estatistica_pdf(turma):
         conn = get_db_connection()
         cur = conn.cursor()
 
+        # Dados de candidatos e classificação
         cur.execute("SELECT * FROM sp_apurar_turma(%s)", (turma,))
         rows = cur.fetchall()
         candidatos = []
         for r in rows:
             candidatos.append({
-                'id': r[0], 'nome': r[1], 'sexo': r[2],
-                'votos': r[3], 'classificacao': r[4]
+                'id': r[0],
+                'nome': r[1],
+                'sexo': r[2],
+                'votos': r[3],
+                'classificacao': r[4]
             })
 
+        # Contagem de brancos / nulos / válidos
         cur.execute(
-            "SELECT tipo_voto, COUNT(*) FROM votos_turma WHERE turma = %s GROUP BY tipo_voto",
+            """
+            SELECT tipo_voto, COUNT(*)
+            FROM votos_turma
+            WHERE turma = %s
+            GROUP BY tipo_voto
+            """,
             (turma,)
         )
         contagem = {'VALIDO': 0, 'BRANCO': 0, 'NULO': 0}
         for tipo, qtd in cur.fetchall():
             contagem[tipo] = qtd
 
-        # agora busca a lista individual de votos também
+        # Lista completa de votos
         cur.execute(
-            "SELECT id, numero_chapa, tipo_voto, data_hora FROM votos_turma WHERE turma = %s ORDER BY id ASC",
+            """
+            SELECT id, numero_chapa, tipo_voto, data_hora
+            FROM votos_turma
+            WHERE turma = %s
+            ORDER BY id ASC
+            """,
             (turma,)
         )
         votos = cur.fetchall()
 
-        # precisava pegar o modo_voto antes de fechar a conexão
-        cur.execute("SELECT modo_voto FROM sp_configurar_urna(%s)", (turma,))
-        modo_row = cur.fetchone()
-        modo_voto = modo_row[0] if modo_row else 'DISPUTA_DUPLA'
+        # Fechamento do banco movido para DEPOIS de consultar o modo_voto
 
-        cur.close()
-        conn.close()
-
+        # Se não houver nenhum voto registrado, ainda assim gera um PDF simples
         from reportlab.lib.pagesizes import A4
         from reportlab.pdfgen import canvas
 
         buffer = BytesIO()
         pdf = canvas.Canvas(buffer, pagesize=A4)
         width, height = A4
-        y = height - 40
 
+        y = height - 40
         pdf.setFont("Helvetica-Bold", 16)
-        pdf.drawString(40, y, f"Relatorio Estatistico - Turma {turma}")
-        y -= 24
+        pdf.drawString(40, y, f"Relatório Estatístico Geral - Turma {turma}")
+        y -= 20
+
+        pdf.setFont("Helvetica-Oblique", 9)
+        pdf.drawString(40, y, "Este relatório considera todos os votos registrados na turma, incluindo eventuais 2º turnos.")
+        y -= 20
 
         pdf.setFont("Helvetica", 11)
-        pdf.drawString(40, y, f"Votos validos: {contagem['VALIDO']}")
+        pdf.drawString(40, y, f"Total de votos válidos: {contagem['VALIDO']}")
         y -= 16
-        pdf.drawString(40, y, f"Votos em branco: {contagem['BRANCO']}")
+        pdf.drawString(40, y, f"Total de votos em branco: {contagem['BRANCO']}")
         y -= 16
-        pdf.drawString(40, y, f"Votos nulos: {contagem['NULO']}")
+        pdf.drawString(40, y, f"Total de votos nulos: {contagem['NULO']}")
         y -= 24
 
+        # Obter o modo de voto para saber quais as regras de eleitos
+        cur.execute("SELECT modo_voto FROM sp_configurar_urna(%s)", (turma,))
+        modo_row = cur.fetchone()
+        modo_voto = modo_row[0] if modo_row else 'DISPUTA_DUPLA'
+        
+        cur.close()
+        conn.close()
+
+        vencedores = []
+        if modo_voto == 'DISPUTA_DUPLA':
+            # Maior(es) de cada sexo
+            for sexo_cand in ('Masculino', 'Feminino'):
+                do_sexo = [c for c in candidatos if c['sexo'] == sexo_cand]
+                if do_sexo:
+                    max_votos = max(c['votos'] for c in do_sexo)
+                    vencedores.extend([c for c in do_sexo if c['votos'] == max_votos])
+            titulo_eleitos = "Candidatos Mais Votados por Sexo:"
+        else:
+            # UNICO_SEXO: Elegem-se 2, avaliamos o preenchimento dessas 2 vagas
+            titulo_eleitos = "Candidatos Mais Votados (Top 2 Vagas):"
+            if len(candidatos) > 0:
+                votos_1 = candidatos[0]['votos']
+                cand_votos_1 = [c for c in candidatos if c['votos'] == votos_1]
+                
+                if len(cand_votos_1) >= 2:
+                    # Se 2 ou mais pessoas empataram no topo, elas preenchem (ou disputam) as 2 vagas
+                    vencedores.extend(cand_votos_1)
+                else:
+                    # Apenas 1 pessoa com mais votos ganha a 1ª vaga
+                    vencedores.extend(cand_votos_1)
+                    if len(candidatos) > 1:
+                        # Vamos ver quem ocupa a 2ª vaga
+                        votos_2 = candidatos[1]['votos']
+                        cand_votos_2 = [c for c in candidatos if c['votos'] == votos_2]
+                        vencedores.extend(cand_votos_2)
+
+        pdf.setFont("Helvetica-Bold", 12)
+        pdf.drawString(40, y, titulo_eleitos)
+        y -= 18
+        pdf.setFont("Helvetica", 11)
+        if vencedores:
+            for cand in vencedores:
+                texto = f"- {cand['nome']} ({cand['sexo']}) - {cand['votos']} voto(s)"
+                pdf.drawString(50, y, texto)
+                y -= 14
+                if y < 80:
+                    pdf.showPage()
+                    y = height - 40
+        else:
+            pdf.drawString(50, y, "Nenhum candidato com votos.")
+            y -= 18
+
+        # Tabela geral de candidatos
+        if y < 120:
+            pdf.showPage()
+            y = height - 40
         pdf.setFont("Helvetica-Bold", 12)
         pdf.drawString(40, y, "Resumo por candidato:")
         y -= 18
         pdf.setFont("Helvetica", 11)
         for cand in candidatos:
-            linha = f"Chapa ID {cand['id']} - {cand['nome']} ({cand['sexo']}): {cand['votos']} voto(s) - Classificacao {cand['classificacao']}"
+            linha = f"Chapa ID {cand['id']} - {cand['nome']} ({cand['sexo']}): {cand['votos']} voto(s) - Classificação {cand['classificacao']}"
             pdf.drawString(50, y, linha)
             y -= 14
             if y < 80:
                 pdf.showPage()
                 y = height - 40
 
+        # Lista de todos os votos
         if votos:
             if y < 120:
                 pdf.showPage()
@@ -451,7 +522,7 @@ def estatistica_pdf(turma):
             pdf.setFont("Helvetica", 10)
             for v in votos:
                 vid, numero_chapa, tipo_voto, data_hora = v
-                num_txt = f"Chapa {numero_chapa}" if numero_chapa is not None else "Sem numero"
+                num_txt = f"Chapa {numero_chapa}" if numero_chapa is not None else "Sem número"
                 linha = f"#{vid} - {num_txt} - {tipo_voto} - {data_hora.strftime('%d/%m/%Y %H:%M:%S')}"
                 pdf.drawString(50, y, linha)
                 y -= 12
@@ -463,11 +534,12 @@ def estatistica_pdf(turma):
         pdf.save()
         buffer.seek(0)
 
+        filename = f"estatistica_{turma}.pdf"
         return send_file(
             buffer,
             mimetype='application/pdf',
             as_attachment=True,
-            download_name=f"estatistica_{turma}.pdf"
+            download_name=filename
         )
     except Exception as e:
         return jsonify({'error': str(e)}), 500
