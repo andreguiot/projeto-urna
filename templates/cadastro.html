@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,6 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=League+Spartan:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../static/css/style.css">
 </head>
+
 <body>
 
     <header class="header-topo">
@@ -18,7 +20,7 @@
     </header>
 
     <main class="container">
-        
+
         <section class="card formulario-section">
             <h2>Novo Candidato</h2>
             <form id="formCadastro">
@@ -54,7 +56,7 @@
                     <label for="nome">Nome Completo</label>
                     <input type="text" id="nome" name="nome" placeholder="Ex: João da Silva" required>
                 </div>
-                
+
                 <div class="grupo-input">
                     <label for="sexo">Sexo do Candidato</label>
                     <select id="sexo" name="sexo" required>
@@ -67,7 +69,7 @@
                 <div class="opcoes-candidato">
                     <div class="controle-checkbox">
                         <input type="checkbox" id="sem_foto" name="sem_foto">
-                        <label for="sem_foto">Aluno não possui foto disponível</label>
+                        <label for="sem_foto">Aluno sem foto.</label>
                     </div>
                 </div>
 
@@ -91,7 +93,7 @@
                 <h2>Candidatos da Turma</h2>
                 <button onclick="carregarLista()" class="btn-refresh">Atualizar</button>
             </div>
-            
+
             <div id="lista-candidatos" class="grid-candidatos">
                 <p class="aviso-vazio">Selecione uma turma para ver os candidatos.</p>
             </div>
@@ -103,4 +105,5 @@
 
     <script src="../static/js/admin.js"></script>
 </body>
+
 </html>

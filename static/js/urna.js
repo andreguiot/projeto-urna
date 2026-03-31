@@ -472,7 +472,6 @@ async function confirmar() {
             return;
         }
 
-        // TODO: verificar votos existentes e oferecer PDF (próximo commit)
         const turmaCarregada = dados.turma;
 
         // Se já estivermos retornando para a mesma turma e houver votos,

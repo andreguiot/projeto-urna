@@ -1,5 +1,5 @@
-/* GUIA DE AJUSTE MANUAL (Calibração de Posicionamento)
-   Ajuste as variáveis CSS abaixo para reposicionar elementos.
+/* GUIA DE AJUSTE MANUAL (Calibração)
+   Altere os valores abaixo para reposicionar os elementos na tela.
    Use % para manter a proporção em diferentes tamanhos de monitor.
 */
 
@@ -42,7 +42,6 @@ body {
     background-repeat: no-repeat;
     background-position: center;
     position: relative;
-    overflow: hidden;
 }
 
 /* --- ÁREA DO MONITOR (TELA BRANCA) --- */

@@ -11,11 +11,11 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 DB_CONFIG = {
-    'dbname': 'urna-db',
+    'dbname': 'urna_db',
     'user': 'postgres',
     'password': 'root',
     'host': 'localhost',
-    'port': '5433'
+    'port': '5432'
 }
 
 def get_db_connection():
@@ -151,6 +151,7 @@ def registrar_votos():
     for voto in votos:
         numero = voto.get('numero')
         tipo = voto.get('tipo')
+
         # Garante um tipo de voto conhecido
         if tipo not in ('VALIDO', 'BRANCO', 'NULO'):
             tipo = 'NULO'
@@ -171,7 +172,9 @@ def registrar_votos():
     conn.commit()
     cur.close()
     conn.close()
+
     return jsonify({'message': 'Votos registrados', 'quantidade': len(votos)})
+
 
 @app.route('/api/apuracao/<turma>', methods=['GET'])
 def apurar_turma(turma):
@@ -183,6 +186,7 @@ def apurar_turma(turma):
     conn = get_db_connection()
     cur = conn.cursor()
 
+    # Candidatos e votos (usa a função que já existe no banco)
     cur.execute("SELECT * FROM sp_apurar_turma(%s)", (turma,))
     rows = cur.fetchall()
 
@@ -199,9 +203,9 @@ def apurar_turma(turma):
     # Contagem de brancos e nulos
     cur.execute(
         """
-        SELECT tipo_voto, COUNT(*)
-        FROM votos_turma
-        WHERE turma = %s
+        SELECT tipo_voto, COUNT(*) 
+        FROM votos_turma 
+        WHERE turma = %s 
         GROUP BY tipo_voto
         """,
         (turma,)
@@ -221,149 +225,6 @@ def apurar_turma(turma):
         'votos_nulos': contagem['NULO']
     })
 
-@app.route('/api/urna/<turma>', methods=['GET'])
-def configurar_urna(turma):
-    """
-    Configura os candidatos da urna para uma turma.
-    - Turno 1 (padrão): usa sp_configurar_urna (todos os candidatos).
-    - Turno 2: usa sp_apurar_turma para selecionar apenas candidatos empatados
-      entre si por sexo (meninos com meninos, meninas com meninas).
-    """
-    turno = request.args.get('turno', '1')
-
-    conn = get_db_connection()
-    cur = conn.cursor()
-
-    if turno == '2':
-        # Consulta o modo de voto para saber as regras do 2º turno
-        cur.execute("SELECT modo_voto FROM sp_configurar_urna(%s)", (turma,))
-        modo_row = cur.fetchone()
-        modo_voto = modo_row[0] if modo_row else 'DISPUTA_DUPLA'
-
-        cur.execute("SELECT * FROM sp_apurar_turma(%s)", (turma,))
-        rows = cur.fetchall()
-
-        if not rows:
-            cur.close()
-            conn.close()
-            return jsonify({'error': 'Turma sem candidatos para apuração'}), 404
-
-        empatados_ids = []
-        sexos_presentes = set()
-
-        if modo_voto == 'DISPUTA_DUPLA':
-            for sexo_alvo in ('Masculino', 'Feminino'):
-                do_sexo = [r for r in rows if r[2] == sexo_alvo]
-                if not do_sexo: continue
-                max_votos = max(r[3] for r in do_sexo)
-                candidatos_topo = [r for r in do_sexo if r[3] == max_votos]
-                if len(candidatos_topo) > 1:
-                    empatados_ids.extend(r[0] for r in candidatos_topo)
-                    sexos_presentes.add(sexo_alvo)
-        else:
-            # UNICO_SEXO: Elegem-se 2.
-            # Verificamos empates que impeçam apontar as 2 pessoas
-            if len(rows) >= 2:
-                votos_1 = rows[0][3]
-                cand_votos_1 = [r for r in rows if r[3] == votos_1]
-                
-                if len(cand_votos_1) > 2:
-                    # Ex: 3 pessoas com 5 votos. Empataram brigando por 2 vagas.
-                    empatados_ids.extend(r[0] for r in cand_votos_1)
-                elif len(cand_votos_1) == 2:
-                    # Ex: 2 pessoas no topo exato. Ambas são eleitas. Não tem empate pro 2º turno.
-                    pass
-                else: 
-                    # Apenas 1 no topo. 1ª vaga garantida. 
-                    # Disputa do desempate é pela 2ª vaga:
-                    votos_2 = rows[1][3]
-                    cand_votos_2 = [r for r in rows if r[3] == votos_2]
-                    if len(cand_votos_2) > 1:
-                        # Ex: B e C com 3 votos cada brigando pela 2ª vaga
-                        empatados_ids.extend(r[0] for r in cand_votos_2)
-
-        if not empatados_ids:
-            cur.close()
-            conn.close()
-            return jsonify({'error': 'Não há candidatos empatados para 2º turno nesta turma.'}), 400
-
-        candidatos_ids = empatados_ids
-        eleitos_ids = []
-
-        # Define modo de voto e votos por aluno no 2º turno
-        if len(sexos_presentes) > 1:
-            modo_voto = 'DISPUTA_DUPLA'
-            votos_por_aluno = 2
-        else:
-            modo_voto = 'UNICO_SEXO'
-            # No 2º turno, mesmo que só haja candidatos de um único sexo empatados,
-            # cada aluno deve escolher apenas UM entre eles.
-            votos_por_aluno = 1
-    else:
-        # Primeiro turno: usa a função de configuração original
-        cur.execute("SELECT * FROM sp_configurar_urna(%s)", (turma,))
-        row = cur.fetchone()
-
-        if not row:
-            cur.close()
-            conn.close()
-            return jsonify({'error': 'Turma não encontrada ou sem configuração'}), 404
-
-        modo_voto, votos_por_aluno, candidatos_ids, eleitos_ids = row
-        candidatos_ids = candidatos_ids or []
-        eleitos_ids = eleitos_ids or []
-
-        # Caso especial: turma realmente sem candidatos (ambas listas vazias)
-        if modo_voto == 'SEM_VOTACAO' and len(candidatos_ids) == 0 and len(eleitos_ids) == 0:
-            cur.close()
-            conn.close()
-            return jsonify({'error': 'Turma sem candidatos cadastrados'}), 404
-
-    dados_candidatos = []
-    dados_eleitos = []
-
-    if candidatos_ids:
-        cur.execute("""
-            SELECT id, nome, numero_chapa, caminho_foto, sexo
-            FROM candidatos
-            WHERE id = ANY(%s)
-            ORDER BY numero_chapa ASC
-        """, (candidatos_ids,))
-        for c in cur.fetchall():
-            dados_candidatos.append({
-                'id': c[0],
-                'nome': c[1],
-                # Sempre envia o número da chapa com 2 dígitos (01, 02, 10...)
-                'numero': f"{c[2]:02d}" if isinstance(c[2], int) else str(c[2]),
-                'foto': c[3],
-                'sexo': c[4]
-            })
-
-    if eleitos_ids:
-        cur.execute("""
-            SELECT id, nome, numero_chapa, caminho_foto, sexo
-            FROM candidatos
-            WHERE id = ANY(%s)
-            ORDER BY numero_chapa ASC
-        """, (eleitos_ids,))
-        for c in cur.fetchall():
-            dados_eleitos.append({
-                'id': c[0],
-                'nome': c[1],
-                'numero': f"{c[2]:02d}" if isinstance(c[2], int) else str(c[2]),
-                'foto': c[3],
-                'sexo': c[4]
-            })
-    cur.close()
-    conn.close()
-
-    return jsonify({
-        'turma': turma,
-        'modo_voto': modo_voto,
-        'votos_por_aluno': votos_por_aluno,
-        'candidatos_votacao': dados_candidatos,
-        'eleitos_automaticos': dados_eleitos
-    })
 
 @app.route('/api/estatistica_pdf/<turma>', methods=['GET'])
 def estatistica_pdf(turma):
@@ -544,5 +405,148 @@ def estatistica_pdf(turma):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/urna/<turma>', methods=['GET'])
+def configurar_urna(turma):
+    """
+    Configura os candidatos da urna para uma turma.
+    - Turno 1 (padrão): usa sp_configurar_urna (todos os candidatos).
+    - Turno 2: usa sp_apurar_turma para selecionar apenas candidatos empatados
+      entre si por sexo (meninos com meninos, meninas com meninas).
+    """
+    turno = request.args.get('turno', '1')
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    if turno == '2':
+        # Consulta o modo de voto para saber as regras do 2º turno
+        cur.execute("SELECT modo_voto FROM sp_configurar_urna(%s)", (turma,))
+        modo_row = cur.fetchone()
+        modo_voto = modo_row[0] if modo_row else 'DISPUTA_DUPLA'
+
+        cur.execute("SELECT * FROM sp_apurar_turma(%s)", (turma,))
+        rows = cur.fetchall()
+
+        if not rows:
+            cur.close()
+            conn.close()
+            return jsonify({'error': 'Turma sem candidatos para apuração'}), 404
+
+        empatados_ids = []
+        sexos_presentes = set()
+
+        if modo_voto == 'DISPUTA_DUPLA':
+            for sexo_alvo in ('Masculino', 'Feminino'):
+                do_sexo = [r for r in rows if r[2] == sexo_alvo]
+                if not do_sexo: continue
+                max_votos = max(r[3] for r in do_sexo)
+                candidatos_topo = [r for r in do_sexo if r[3] == max_votos]
+                if len(candidatos_topo) > 1:
+                    empatados_ids.extend(r[0] for r in candidatos_topo)
+                    sexos_presentes.add(sexo_alvo)
+        else:
+            # UNICO_SEXO: Elegem-se 2.
+            # Verificamos empates que impeçam apontar as 2 pessoas
+            if len(rows) >= 2:
+                votos_1 = rows[0][3]
+                cand_votos_1 = [r for r in rows if r[3] == votos_1]
+                
+                if len(cand_votos_1) > 2:
+                    # Ex: 3 pessoas com 5 votos. Empataram brigando por 2 vagas.
+                    empatados_ids.extend(r[0] for r in cand_votos_1)
+                elif len(cand_votos_1) == 2:
+                    # Ex: 2 pessoas no topo exato. Ambas são eleitas. Não tem empate pro 2º turno.
+                    pass
+                else: 
+                    # Apenas 1 no topo. 1ª vaga garantida. 
+                    # Disputa do desempate é pela 2ª vaga:
+                    votos_2 = rows[1][3]
+                    cand_votos_2 = [r for r in rows if r[3] == votos_2]
+                    if len(cand_votos_2) > 1:
+                        # Ex: B e C com 3 votos cada brigando pela 2ª vaga
+                        empatados_ids.extend(r[0] for r in cand_votos_2)
+
+        if not empatados_ids:
+            cur.close()
+            conn.close()
+            return jsonify({'error': 'Não há candidatos empatados para 2º turno nesta turma.'}), 400
+
+        candidatos_ids = empatados_ids
+        eleitos_ids = []
+
+        # Define modo de voto e votos por aluno no 2º turno
+        if len(sexos_presentes) > 1:
+            modo_voto = 'DISPUTA_DUPLA'
+            votos_por_aluno = 2
+        else:
+            modo_voto = 'UNICO_SEXO'
+            # No 2º turno, mesmo que só haja candidatos de um único sexo empatados,
+            # cada aluno deve escolher apenas UM entre eles.
+            votos_por_aluno = 1
+    else:
+        # Primeiro turno: usa a função de configuração original
+        cur.execute("SELECT * FROM sp_configurar_urna(%s)", (turma,))
+        row = cur.fetchone()
+
+        if not row:
+            cur.close()
+            conn.close()
+            return jsonify({'error': 'Turma não encontrada ou sem configuração'}), 404
+
+        modo_voto, votos_por_aluno, candidatos_ids, eleitos_ids = row
+        candidatos_ids = candidatos_ids or []
+        eleitos_ids = eleitos_ids or []
+
+        # Caso especial: turma realmente sem candidatos (ambas listas vazias)
+        if modo_voto == 'SEM_VOTACAO' and len(candidatos_ids) == 0 and len(eleitos_ids) == 0:
+            cur.close()
+            conn.close()
+            return jsonify({'error': 'Turma sem candidatos cadastrados'}), 404
+    dados_candidatos = []
+    dados_eleitos = []
+
+    if candidatos_ids:
+        cur.execute("""
+            SELECT id, nome, numero_chapa, caminho_foto, sexo
+            FROM candidatos
+            WHERE id = ANY(%s)
+            ORDER BY numero_chapa ASC
+        """, (candidatos_ids,))
+        for c in cur.fetchall():
+            dados_candidatos.append({
+                'id': c[0],
+                'nome': c[1],
+                # Sempre envia o número da chapa com 2 dígitos (01, 02, 10...)
+                'numero': f"{c[2]:02d}" if isinstance(c[2], int) else str(c[2]),
+                'foto': c[3],
+                'sexo': c[4]
+            })
+
+    if eleitos_ids:
+        cur.execute("""
+            SELECT id, nome, numero_chapa, caminho_foto, sexo
+            FROM candidatos
+            WHERE id = ANY(%s)
+            ORDER BY numero_chapa ASC
+        """, (eleitos_ids,))
+        for c in cur.fetchall():
+            dados_eleitos.append({
+                'id': c[0],
+                'nome': c[1],
+                'numero': f"{c[2]:02d}" if isinstance(c[2], int) else str(c[2]),
+                'foto': c[3],
+                'sexo': c[4]
+            })
+    cur.close()
+    conn.close()
+
+    return jsonify({
+        'turma': turma,
+        'modo_voto': modo_voto,
+        'votos_por_aluno': votos_por_aluno,
+        'candidatos_votacao': dados_candidatos,
+        'eleitos_automaticos': dados_eleitos
+    })
+
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    app.run(debug=True, port=5000)
