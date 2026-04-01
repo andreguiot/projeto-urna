@@ -47,7 +47,7 @@ const turmasPorAno = {
 const form = document.getElementById('formCadastro');
 const inputFoto = document.getElementById('foto');
 const checkSemFoto = document.getElementById('sem_foto');
-const checkIsNovo = document.getElementById('is_novo');
+const checkIsNovo = document.getElementById('is_novo'); // pode ser null se removido do HTML
 const areaUpload = document.getElementById('area-upload');
 const previewContainer = document.getElementById('preview-container');
 const previewImg = document.getElementById('preview-img');
@@ -104,7 +104,7 @@ form.addEventListener('submit', async (e) => {
     e.preventDefault();
     feedback.textContent = "Processando...";
     const formData = new FormData(form);
-    formData.set('is_novo', checkIsNovo.checked);
+    formData.set('is_novo', checkIsNovo ? checkIsNovo.checked : false);
 
     try {
         const res = await service.salvar(formData);
